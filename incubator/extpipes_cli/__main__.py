@@ -50,8 +50,9 @@ from incubator.extpipes_cli import __version__
 # common
 import logging
 import requests, yaml, json, os
-from datetime import datetime
 import pandas as pd
+from pathlib import Path
+from datetime import datetime
 from functools import lru_cache, partial
 
 # type-hints
@@ -118,7 +119,7 @@ supported_resource_types = {
     'files'      : None, # no data_class available for create(...)
 }
 
-
+# type-hint for ExtpipesCore instance response
 T_ExtpipesCore = TypeVar('T_ExtpipesCore', bound='ExtpipesCore')
 
 class ExtpipesCore:
@@ -129,7 +130,13 @@ class ExtpipesCore:
     def __init__(self, configpath: str):
         self.config: ExtpipesConfig = ExtpipesConfig.from_yaml(configpath)
 
-        print(f'self.config= {self.config}')
+        # print(f'self.config= {self.config}')
+
+        # make sure the optional folders in logger.file.path exists
+        # to avoid: FileNotFoundError: [Errno 2] No such file or directory: '/github/workspace/logs/test-deploy.log'
+
+        if self.config.logger.file:
+            (Path.cwd() / self.config.logger.file.path).parent.mkdir(parents=True, exist_ok=True)
 
         self.config.logger.setup_logging()
 
@@ -418,18 +425,18 @@ def extpipes_cli(
 @click.pass_obj
 def deploy(obj: Dict, config_file: str, debug: bool = False) -> None:
 
-    click.echo(click.style("Deploying extraction pipelines...", fg="red"))
+    click.echo(click.style("Deploying Extraction Pipelines...", fg="red"))
 
     if debug:
-        # not working yet :/
+        # TODO not working yet :/
         _logger.setLevel("DEBUG") # INFO/DEBUG
 
     try:
-        # load env from file
+        # load .env from file if exists
         load_dotenv()
 
-        _logger.debug(f'os.environ = {os.environ}')
-        print(f'os.environ= {os.environ}')
+        # _logger.debug(f'os.environ = {os.environ}')
+        # print(f'os.environ= {os.environ}')
 
         # run deployment
         (ExtpipesCore(config_file)
@@ -437,7 +444,7 @@ def deploy(obj: Dict, config_file: str, debug: bool = False) -> None:
             .deploy()
         )
 
-        click.echo(click.style("Extraction pipelines deployed", fg="blue"))
+        click.echo(click.style("Extraction Pipelines deployed", fg="green"))
 
     except ExtpipesConfigError as e:
         exit(e.message)

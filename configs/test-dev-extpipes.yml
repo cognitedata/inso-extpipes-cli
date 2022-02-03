@@ -1,6 +1,5 @@
 # follows the same parameter structure as the DB extractor configuration
-cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
-  # host: https://${EXTPIPES_CDF_CLUSTER}.cognitedata.com/
+cognite: 
   host: ${EXTPIPES_CDF_HOST}
   project: ${EXTPIPES_CDF_PROJECT}
   #
@@ -12,8 +11,6 @@ cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${E
     scopes:
       - ${EXTPIPES_IDP_SCOPES}
     token_url: ${EXTPIPES_IDP_TOKEN_URL}
-    # only required for ADFS
-    # resource: ${CDF_IDP_RESOURCE}
 
 logger:
   file:
