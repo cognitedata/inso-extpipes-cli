@@ -165,19 +165,19 @@ class ExtpipesCore:
         # externalId_template = lambda : f"{pipeline}:{':'.join(group.split(':')[:2])}:{tableName}"
         def externalId_template(**kwargs):
             # pipeline: adf
-            # group: src:002:signal
-            # tableName: signal_events (which needs split from optional suffix: signal_events:hourly)
+            # group: src:002:internal
+            # tableName: int_events (which needs split from optional suffix: int_events:hourly)
             
             # output:
-            # adf:src:002:signal_events
+            # adf:src:002:int_events
             return f"{kwargs['pipeline']}:{':'.join(kwargs['group'].split(':')[:2])}:{kwargs['tableName']}"
 
         # description_template = lambda: f"{tableName.split('_')[0].upper()} integration through {pipeline.upper()}"
         def description_template(**kwargs):
             # pipeline: adf
-            # tableName: imos_voyages
+            # tableName: un_ports
             # output:
-            # IMOS_VOYAGES integration through ADF
+            # UN_PORTS integration through ADF
             return f"{kwargs['tableName'].upper()} integration through {kwargs['pipeline'].upper()}"
 
 
@@ -201,13 +201,12 @@ class ExtpipesCore:
                                 'tableName': tableName.split(':')[0]
                             }],
                 contacts     = [ExtractionPipelineContact(
-                                name= "Peter Arwanitis",
-                                email= "parw@equinor.com",
+                                name= "Your Name",
+                                email= "your.name@domain.com",
                                 role= "admin",
                                 send_notification= False
                             )],
                 # no validation yet
-                # 211221 pa: added missing parameter
                 schedule     = pipeline_details.get('schedule')
             )
 

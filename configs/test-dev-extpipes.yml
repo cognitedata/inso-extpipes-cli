@@ -24,87 +24,23 @@ logger:
 
 extpipes:
   # <configuration-group> following the dataops:cdf-groups naming scheme (predefined RAW DB)
-  src:001:exact:
+  src:001:public:
     # list of pipelines
     pipelines:
       # RAW table target
-      exact_ais:
+      un_ports:
         # extraction/integration type: adf, az-func, py, db-extractor
         adf:
           # schedule (Continuous | On trigger | <cron> | null)
           schedule: Continuous
-      exact_ais_v2:
-        # 220126 pa: new exact_ais feed
+      un_vessels:
         az-func:
-          schedule: Continuous
-  # 211215 pa: switched from adf to az-func
-  src:002:signal:
+          schedule: On Trigger
+  src:002:internal:
     pipelines:
-      signal_voyages:
+      int_voyage:
         az-func:
           schedule: Continuous
-      signal_events:
-        az-func:
-          schedule: Continuous
-      signal_eventdetails:
-        az-func:
-          schedule: Continuous
-      signal_geos:
-        az-func:
-          schedule: Continuous
-      # for this table two different schedules exist: hourly/daily
-      signal_tonnage_lists:hourly:
-        az-func:
-          schedule: Continuous
-      signal_tonnage_lists:daily:
-        az-func:
-          schedule: Continuous
-  src:003:imos:
-    pipelines:
-      imos_voyages:
-        az-func:
-          schedule: Continuous
-  src:004:eqn:
-    pipelines:
-      equinor_ports:
-        adf:
-          schedule: Continuous
-      equinor_vessels:
-        adf:
-          schedule: Continuous
-      equinor_ports_kpler_plus:
-        adf:
-          schedule: Continuous
-      equinor_vessels_kpler_plus:
-        adf:
-          schedule: Continuous
-  src:005:public:
-    pipelines:
-      public_un_ports:
-       py:
-          schedule: On trigger
-  # 211215 pa: gdm will be switched from adf to az-func
-  # 211221 pa: removed the adf- schedules
-  src:006:gdm:
-    pipelines:
-      gdm_detailed_property:
-        az-func:
-          schedule: Continuous
-      gdm_model:
-        az-func:
-          schedule: Continuous
-      gdm_profiles:
-        az-func:
-          schedule: Continuous
-      gdm_property:
-        az-func:
-          schedule: Continuous
-      gdm_fact_price:
-        az-func:
-          schedule: Continuous
-  # 220106 cf: added src:007:cargo
-  src:007:cargo:
-    pipelines:
-      cargo_crude_tracker:
+      int_events:
         az-func:
           schedule: Continuous
