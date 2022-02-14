@@ -1,3 +1,12 @@
+# Table Of Contents
+- [Table Of Contents](#table-of-contents)
+- [scope of work](#scope-of-work)
+  - [to be done](#to-be-done)
+- [how to run](#how-to-run)
+  - [run local with poetry](#run-local-with-poetry)
+  - [run local with Python](#run-local-with-python)
+  - [run local with Docker](#run-local-with-docker)
+  - [run as github action](#run-as-github-action)
 # scope of work
 
 - the prefix `inso-` names this solution as provided by Cognite Industry Solution team, and is not (yet) an offical supported cli / GitHub Action  from Cognite
@@ -25,7 +34,13 @@
   - code-signed exe required for Windows
 
 # how to run
-## run local with poetry and .env
+Follow the initial setup first
+
+1. Fill out relevant configurations from `configs`
+1.1. Fill out/change `extpipes` from `test-dev-extpipes.yml`
+2. Change `.env_example` to `.env`
+3. Fill out `.env`
+## run local with poetry
 
 ```bash
 poetry build
@@ -43,7 +58,7 @@ export PYTHONPATH=.
 python incubator/extpipes_cli/__main__.py deploy configs/test-dev-extpipes.yml 
 ```
 
-## run local with Docker and .env
+## run local with Docker
 - `.dockerignore` file
 - volumes for `configs` (to read) and `logs` folder (to write)
 
