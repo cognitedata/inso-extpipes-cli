@@ -37,7 +37,7 @@
 Follow the initial setup first
 
 1. Fill out relevant configurations from `configs`
-1.1. Fill out/change `extpipes` from `test-dev-extpipes.yml`
+1.1. Fill out/change `extpipes` from `example-config-extpipes.yml`
 2. Change `.env_example` to `.env`
 3. Fill out `.env`
 ## run local with poetry
@@ -47,7 +47,7 @@ poetry build
 poetry install
 poetry update
 
-poetry run extpipes-cli deploy --debug configs/test-dev-extpipes.yml
+poetry run extpipes-cli deploy --debug configs/example-config-extpipes.yml
 ```
 
 ## run local with Python
@@ -55,7 +55,7 @@ poetry run extpipes-cli deploy --debug configs/test-dev-extpipes.yml
 ```bash
 export PYTHONPATH=.
 
-python incubator/extpipes_cli/__main__.py deploy configs/test-dev-extpipes.yml 
+python incubator/extpipes_cli/__main__.py deploy configs/example-config-extpipes.yml 
 ```
 
 ## run local with Docker
@@ -66,7 +66,7 @@ python incubator/extpipes_cli/__main__.py deploy configs/test-dev-extpipes.yml
 docker build -t incubator/extpipes:v1.0 -t incubator/extpipes:latest .
 
 # ${PWD} because only absolute paths can be mounted
-docker run -it --volume ${PWD}/configs:/configs --volume ${PWD}/logs:/logs  --env-file=.env incubator/extpipes deploy /configs/test-dev-extpipes.yml
+docker run -it --volume ${PWD}/configs:/configs --volume ${PWD}/logs:/logs  --env-file=.env incubator/extpipes deploy /configs/example-config-extpipes.yml
 ```
 
 Try to debug container
@@ -103,5 +103,5 @@ jobs:
             EXTPIPES_IDP_SCOPES: ${{ env.CDF_HOST }}.default
         # additional parameters for running the action
         with:
-          config_file: ./configs/test-dev-extpipes.yml
+          config_file: ./configs/example-config-extpipes.yml
 ```
