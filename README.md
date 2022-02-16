@@ -1,3 +1,15 @@
+inso-extpipes-cli
+===
+# Table Of Contents
+- [inso-extpipes-cli](#inso-extpipes-cli)
+- [Table Of Contents](#table-of-contents)
+- [scope of work](#scope-of-work)
+  - [to be done](#to-be-done)
+- [how to run](#how-to-run)
+  - [run local with poetry](#run-local-with-poetry)
+  - [run local with Python](#run-local-with-python)
+  - [run local with Docker](#run-local-with-docker)
+  - [run as github action](#run-as-github-action)
 # scope of work
 
 - the prefix `inso-` names this solution as provided by Cognite Industry Solution team, and is not (yet) an offical supported cli / GitHub Action  from Cognite
@@ -25,14 +37,20 @@
   - code-signed exe required for Windows
 
 # how to run
-## run local with poetry and .env
+Follow the initial setup first
+
+1. Fill out relevant configurations from `configs`
+1.1. Fill out/change `extpipes` from `example-config-extpipes.yml`
+2. Change `.env_example` to `.env`
+3. Fill out `.env`
+## run local with poetry
 
 ```bash
 poetry build
 poetry install
 poetry update
 
-poetry run extpipes-cli deploy --debug configs/test-dev-extpipes.yml
+poetry run extpipes-cli deploy --debug configs/example-config-extpipes.yml
 ```
 
 ## run local with Python
@@ -40,10 +58,10 @@ poetry run extpipes-cli deploy --debug configs/test-dev-extpipes.yml
 ```bash
 export PYTHONPATH=.
 
-python incubator/extpipes_cli/__main__.py deploy configs/test-dev-extpipes.yml 
+python incubator/extpipes_cli/__main__.py deploy configs/example-config-extpipes.yml 
 ```
 
-## run local with Docker and .env
+## run local with Docker
 - `.dockerignore` file
 - volumes for `configs` (to read) and `logs` folder (to write)
 
@@ -51,7 +69,7 @@ python incubator/extpipes_cli/__main__.py deploy configs/test-dev-extpipes.yml
 docker build -t incubator/extpipes:v1.0 -t incubator/extpipes:latest .
 
 # ${PWD} because only absolute paths can be mounted
-docker run -it --volume ${PWD}/configs:/configs --volume ${PWD}/logs:/logs  --env-file=.env incubator/extpipes deploy /configs/test-dev-extpipes.yml
+docker run -it --volume ${PWD}/configs:/configs --volume ${PWD}/logs:/logs  --env-file=.env incubator/extpipes deploy /configs/example-config-extpipes.yml
 ```
 
 Try to debug container
@@ -88,5 +106,5 @@ jobs:
             EXTPIPES_IDP_SCOPES: ${{ env.CDF_HOST }}.default
         # additional parameters for running the action
         with:
-          config_file: ./configs/test-dev-extpipes.yml
+          config_file: ./configs/example-config-extpipes.yml
 ```
