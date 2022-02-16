@@ -86,7 +86,12 @@ class ExtpipesConfig:
     def from_yaml(cls, filepath):
         try:
             with open(filepath) as file:
-                return load_yaml(file, cls)
+                # 220216 pa: 
+                # TODO: using case_style='snake' is a quick-fix to allow loading names like `az-func` instead of auto-conversion to `az_func`
+                # using 'snake' seems to bypass the conversion in extractor-utils(?), good for a quick-fix
+                # proper fix is to implement full config-dataclass support, where `az-func` is a value and not a key
+                # which means changed extpipes yaml config format
+                return load_yaml(source=file, config_type=cls, case_style='snake')
         except FileNotFoundError as exc:
             print("Incorrect file path, error message: ", exc)
             raise
