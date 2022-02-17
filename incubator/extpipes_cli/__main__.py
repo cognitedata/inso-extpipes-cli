@@ -391,9 +391,10 @@ class ExtpipesCore:
         # get requested from config
         requested_dict = self.get_requested_dict()
 
-        print('\n'.join([f'{i} : {k}' for i,k in enumerate(requested_dict.keys())]))
-        for i, (extpipe_name, extpipe) in enumerate(requested_dict.items()):
-            print(i, extpipe_name, extpipe)
+        # debug
+        # print('\n'.join([f'{i} : {k}' for i,k in enumerate(requested_dict.keys())]))
+        # for i, (extpipe_name, extpipe) in enumerate(requested_dict.items()):
+        #     print(i, extpipe_name, extpipe)
 
         new_ids: External_ids = get_new_ids(requested_dict.keys(), existing_extpipes_dict.keys())
         _logger.info('## to create: extraction pipelines')
@@ -515,7 +516,7 @@ def deploy(obj: Dict, config_file: str, debug: bool = False) -> None:
 
         # run deployment
         (ExtpipesCore(config_file)
-            # .validate_config()
+            .validate_config()
             .deploy()
         )
 
