@@ -1,6 +1,7 @@
 [tool.poetry]
 name = "inso-extpipes-cli"
-version = "1.0.0"
+# keep manually in sync with __init__.py > __version__
+version = "2.0.0"
 description = "A CLI to deploy CDF Extraction Pipelines"
 authors = ["Peter Arwanitis <peter.arwanitis@cognite.com>", "Tugce Ozgur Oztetik <tugce.oztetik@cognite.com>"]
 license = "Apache-2.0"
@@ -13,7 +14,7 @@ packages = [
 
 [tool.black]
 line-length = 120
-target_version = ['py37']
+target_version = ['py39']
 include = '\.py$'
 
 [tool.isort]
@@ -24,12 +25,12 @@ skip_glob = '^((?!py$).)*$'    # this makes sort all Python files
 known_third_party = ["click", "pytest"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.9"
 cognite-extractor-utils = "^1.6.2"
+cognite-sdk = "^2.38.1"
 python-dotenv = "^0.15.0"
 click = "^8.0.1"
 types-retry = "^0.1.5"
-cognite-sdk = "^2.38.1"
 
 [tool.poetry.dev-dependencies]
 black = "^21.6b0"

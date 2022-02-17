@@ -1,73 +1,125 @@
 """
 changelog
 * 220202 pa: copied first version from incubator-dataops notebook
+* 220217 pa: v2 with a config-schema rewrite
+    * all names are now values, which cannot be changed by 'load_yaml(..)' util
+    * not specifc to bootstrap-cli name-convention anymore
+    * support of 'default-contacts' list
 
 tobedone:
-* logger.info() or print() or click.echo(click.style(..))
-    * logger debug support
-* config for ExtractionPipelineContact (atm Peter Arwanitis)
-* make it clear what is not found (dataset in this case)
+- [x] logger.info() or print() or click.echo(click.style(..))
+    - [ ] logger debug support
+- [x] config for ExtractionPipelineContact (atm Peter Arwanitis)
+- [ ] make it clear what is not found (dataset in this case)
     cognite.client.exceptions.CogniteNotFoundError: Not found: ['src:006:gdm']
 """
 
 '''
 # dataops: external pipeline (`extpipes`) creation / deletion
 * this configuration driven approach builds on top of the "dataops:cdf-groups" approach
-* using the naming scheme of configuration-groups like `src:001:exact` which provides a list of predefined resources
-    * like `src:001:exact:rawdb` 
-    * and a data set with external-id `src:001:exact` and name `src:001:exact:dataset`
 
 * This approach uses stable Python SDK `client.extraction_pipeline`
     * [SDK documentation](https://cognite-docs.readthedocs-hosted.com/projects/cognite-sdk-python/en/latest/cognite.html?highlight=experimental#extraction-pipelines}
     * [API documentation](https://docs.cognite.com/api/v1/#tag/Extraction-Pipelines)
 
 ## to be done
-* `CogniteClient` instance configuration using env-variables 
-* cleanup of `imports`
-* cleanup of unused code(?)
-* validation of `schedule` values
+- [x] `CogniteClient` instance configuration using env-variables 
+- [ ] cleanup of `imports`
+- [ ] cleanup of unused code(?)
+- [ ] validation of `schedule` values
 
-## dependencies will be validated
+## dependencies are validated
 * Dataset must exist
 * RAW DBs must exist
 * Missing RAW Tables will be created
 * `schedule` only supports: `On trigger | Continuous | <cron expression> | null`
 '''
 
-# from cognite.client import CogniteClient
-# use extractor-utils instead
-from cognite.extractorutils.configtools import CogniteConfig, LoggingConfig, load_yaml
-from dotenv import load_dotenv
-
-from cognite.client.data_classes import Asset, TimeSeries, Sequence, Event, DataSet, Label
-from cognite.client.data_classes import ExtractionPipeline, ExtractionPipelineList, ExtractionPipelineContact
-from cognite.client.exceptions import CogniteNotFoundError
-
-from dataclasses import dataclass, field
-
-from incubator.extpipes_cli import __version__
-
-# common
+# std-lib
 import logging
-import requests, yaml, json, os
-import pandas as pd
+import requests
+import yaml
+import json
+import os
+import dataclasses
+from dataclasses import dataclass, field
 from pathlib import Path
 from datetime import datetime
 from functools import lru_cache, partial
-
 # type-hints
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
+# 3rd party libs
+import pandas as pd
 # cli
 import click
 from click import Context
 
-# import getpass
+# Cognite Python SDK and Utils support
+# using extractor-utils instead of native CogniteClient
+from cognite.extractorutils.configtools import CogniteConfig, LoggingConfig, load_yaml
+from cognite.client.data_classes import Asset, TimeSeries, Sequence, Event, DataSet, Label
+from cognite.client.data_classes import ExtractionPipeline, ExtractionPipelineList, ExtractionPipelineContact
+from cognite.client.exceptions import CogniteNotFoundError
+from dotenv import load_dotenv
+
+# cli internal
+from incubator.extpipes_cli import __version__
 
 _logger = logging.getLogger(__name__)
 
 #
 # LOAD configs
+#
+
+from enum import Enum
+
+#
+#        name: string [ 1 .. 140 ] characters 
+#  externalId: string [ 1 .. 255 ] characters
+# description: string [ 1 .. 500 ] characters
+#
+
+# mixin 'str' to 'Enum' to support comparison to string-values
+# https://docs.python.org/3/library/enum.html#others
+# https://stackoverflow.com/a/63028809/1104502
+class ScheduleType(str, Enum):
+    continuous = "Continuous"
+    on_trigger = "On trigger"
+
+@dataclass
+class Contact:
+    name: Optional[str]
+    email: Optional[str]
+    role: Optional[str]
+    send_notification: Optional[bool]
+
+    
+@dataclass
+class Pipeline:
+    # mandatory
+    schedule: Union[ScheduleType, str]
+    # az-func, adf, db, pi, ...
+    source: Optional[str]
+    suffix: Optional[str]
+    # None/On trigger/Continuous/cron regex
+    contacts: Optional[List[Contact]] = field(default_factory=list)
+
+@dataclass
+class Rawtable:
+    rawtable_name: str
+    short_name: Optional[str]
+    pipelines: List[Pipeline]
+    
+@dataclass
+class Rawdb:
+    rawdb_name: str
+    dataset_external_id: str
+    short_name: Optional[str]
+    rawtables: List[Rawtable]
+
+#
+# Old
 #
 @dataclass
 class ExtpipesConfig:
@@ -77,7 +129,14 @@ class ExtpipesConfig:
 
     logger: LoggingConfig
     cognite: CogniteConfig
-    extpipes: Dict[str, Any] # simplify
+    # extpipes: Dict[str, Any] # simplify
+
+    # f-string
+    rawdbs: List[Rawdb]
+    extpipe_pattern: Optional[str]
+    # with default values must come last
+    default_contacts: Optional[List[Contact]] = field(default_factory=list)
+
     # optional for OIDC authentication
     token_custom_args: Dict[str, Any] = field(default_factory=dict)
 
@@ -86,12 +145,7 @@ class ExtpipesConfig:
     def from_yaml(cls, filepath):
         try:
             with open(filepath) as file:
-                # 220216 pa: 
-                # TODO: using case_style='snake' is a quick-fix to allow loading names like `az-func` instead of auto-conversion to `az_func`
-                # using 'snake' seems to bypass the conversion in extractor-utils(?), good for a quick-fix
-                # proper fix is to implement full config-dataclass support, where `az-func` is a value and not a key
-                # which means changed extpipes yaml config format
-                return load_yaml(source=file, config_type=cls, case_style='snake')
+                return load_yaml(source=file, config_type=cls)
         except FileNotFoundError as exc:
             print("Incorrect file path, error message: ", exc)
             raise
@@ -107,8 +161,6 @@ class ExtpipesConfigError(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(self.message)
-
-
 
 # type hints
 External_ids = List[str]
@@ -174,57 +226,61 @@ class ExtpipesCore:
         timestamp = lambda : datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         # print(f"{timestamp()} It's DataOps time")
 
-        # externalId_template = lambda : f"{pipeline}:{':'.join(group.split(':')[:2])}:{tableName}"
-        def externalId_template(**kwargs):
+        def external_id_template(**kwargs):
             # pipeline: adf
             # group: src:002:internal
             # tableName: int_events (which needs split from optional suffix: int_events:hourly)
             
             # output:
             # adf:src:002:int_events
-            return f"{kwargs['pipeline']}:{':'.join(kwargs['group'].split(':')[:2])}:{kwargs['tableName']}"
+            external_id = f"{kwargs['pipeline'].source+':' if kwargs['pipeline'].source else ''}{kwargs['rawdb'].short_name or kwargs['rawdb'].rawdb_name}:{kwargs['rawtable'].short_name or kwargs['rawtable'].rawtable_name}{':'+kwargs['pipeline'].suffix if kwargs['pipeline'].suffix else ''}"
+            assert len(external_id) < 140, f'name= {external_id} is too long (max 140 characters)'
+            # assert len(external_id) < 255, f'external_id= {external_id} is too long'
+            # _logger.info(external_id)
+            return external_id
 
-        # description_template = lambda: f"{tableName.split('_')[0].upper()} integration through {pipeline.upper()}"
+            # return f"{kwargs['pipeline']}:{':'.join(kwargs['group'].split(':')[:2])}:{kwargs['tableName']}"
+
         def description_template(**kwargs):
             # pipeline: adf
             # tableName: un_ports
             # output:
             # UN_PORTS integration through ADF
-            return f"{kwargs['tableName'].upper()} integration through {kwargs['pipeline'].upper()}"
-
+            description = f"{kwargs['rawtable'].rawtable_name.upper()} {'integration through ' + kwargs['pipeline'].source.upper() if kwargs['pipeline'].source else ''}"
+            assert len(description) < 500, f'name= {description} is too long (max 500 characters)'
+            # _logger.info(description)
+            return description
 
         return {
-            externalId_template(**locals()) : 
+            external_id_template(**locals()) : 
             ExtractionPipeline(
-                external_id = externalId_template(**locals()),
-                name        = externalId_template(**locals()),
+                external_id = external_id_template(**locals()),
+                name        = external_id_template(**locals()),
                 # external dataset id has no `:dataset` suffix, but is simply the group name like `src:001:exact`
-                data_set_id = self.resolve_external_id('data_sets', external_id=group, ignore_unknown_ids=True),
+                data_set_id = self.resolve_external_id('data_sets', external_id=rawdb.dataset_external_id, ignore_unknown_ids=True),
 
                 description = description_template(**locals()),
                 metadata    ={
                             'dataops_created': f'{timestamp()}',
-                            'dataops_source': "extpipe-config"
+                            'dataops_source': f"extpipe-config v{__version__}",
                             },
                 # [{"dbName": "value", "tableName" : "value"}]
                 # following the incubator-dataops naming conventions 
                 raw_tables  =[{
-                                'dbName':f'{group}:rawdb', 
-                                'tableName': tableName.split(':')[0]
+                                'dbName': rawdb.rawdb_name, 
+                                'tableName': rawtable.rawtable_name
                             }],
-                contacts     = [ExtractionPipelineContact(
-                                name= "Your Name",
-                                email= "your.name@domain.com",
-                                role= "admin",
-                                send_notification= False
-                            )],
+                contacts    = [
+                                ExtractionPipelineContact(**dataclasses.asdict(contact)) 
+                                for contact in (pipeline.contacts or self.config.default_contacts)
+                            ],
                 # no validation yet
-                schedule     = pipeline_details.get('schedule')
+                schedule     = pipeline.schedule
             )
 
-            for (group, extpipe) in self.config.extpipes.items()
-            for (tableName, pipelines) in extpipe['pipelines'].items()
-            for (pipeline, pipeline_details) in pipelines.items()
+            for rawdb in self.config.rawdbs
+            for rawtable in rawdb.rawtables
+            for pipeline in rawtable.pipelines
             }
 
     '''
@@ -237,13 +293,23 @@ class ExtpipesCore:
 
         # apply list(set()) to remove duplicates
         requested_rawdb_tables = list(set([
-            (f'{group}:rawdb', tableName.split(':')[0])
-                for (group, extpipe) in self.config.extpipes.items()
-                for (tableName, pipelines) in extpipe['pipelines'].items()
+            (rawdb.rawdb_name, rawtable.rawtable_name)
+            for rawdb in self.config.rawdbs
+            for rawtable in rawdb.rawtables
             ]))
-        requested_data_set_external_ids = list(set([f'{group}' 
-                                                    for group in self.config.extpipes.keys()
-                                                ]))
+        # requested_rawdb_tables = list(set([
+        #     (f'{group}:rawdb', tableName.split(':')[0])
+        #         for (group, extpipe) in self.config.extpipes.items()
+        #         for (tableName, pipelines) in extpipe['pipelines'].items()
+        #     ]))
+
+        requested_data_set_external_ids = list(set([
+            rawdb.dataset_external_id
+            for rawdb in self.config.rawdbs
+            ]))
+        # requested_data_set_external_ids = list(set([f'{group}' 
+        #                                             for group in self.config.extpipes.keys()
+        #                                         ]))
 
         _logger.info(requested_rawdb_tables)
         _logger.info(requested_data_set_external_ids)
@@ -324,6 +390,11 @@ class ExtpipesCore:
 
         # get requested from config
         requested_dict = self.get_requested_dict()
+
+        # debug
+        # print('\n'.join([f'{i} : {k}' for i,k in enumerate(requested_dict.keys())]))
+        # for i, (extpipe_name, extpipe) in enumerate(requested_dict.items()):
+        #     print(i, extpipe_name, extpipe)
 
         new_ids: External_ids = get_new_ids(requested_dict.keys(), existing_extpipes_dict.keys())
         _logger.info('## to create: extraction pipelines')
