@@ -10,11 +10,13 @@ inso-extpipes-cli
   - [run local with Python](#run-local-with-python)
   - [run local with Docker](#run-local-with-docker)
   - [run as github action](#run-as-github-action)
+- [Contribute](#contribute)
+      - [Versioning](#versioning)
 # scope of work
 
 - the prefix `inso-` names this solution as provided by Cognite Industry Solution team, and is not (yet) an offical supported cli / GitHub Action  from Cognite
   - it provides a configuration driven deployment for Cognite Extraction Pipelines (named `extpipes` in short)
-  - support to run it 
+  - support to run it
     - from `poetry run`
     - from `python -m`
     - from `docker run`
@@ -22,7 +24,7 @@ inso-extpipes-cli
 
 - templates used for implementation are
   - `cognitedata/transformation-cli`
-  - `cognitedata/python-extratcion-utils` 
+  - `cognitedata/python-extratcion-utils`
     - using `CogniteConfig` and `LoggingConfig`
     - and extended with custom config sections
   - the configuration structure and example expects a CDF Project configured with `cognitedata/inso-cdf-project-cli`
@@ -58,7 +60,7 @@ poetry run extpipes-cli deploy --debug configs/example-config-extpipes.yml
 ```bash
 export PYTHONPATH=.
 
-python incubator/extpipes_cli/__main__.py deploy configs/example-config-extpipes.yml 
+python incubator/extpipes_cli/__main__.py deploy configs/example-config-extpipes.yml
 ```
 
 ## run local with Docker
@@ -84,7 +86,7 @@ docker run -it --volume ${PWD}/configs:/configs --env-file=.env --entrypoint /bi
 ## run as github action
 
 ```yaml
-jobs:  
+jobs:
   deploy:
     name: Deploy Extraction Pipelines
     environment: dev
@@ -99,7 +101,7 @@ jobs:
         uses: cognitedata/inso-expipes-cli@main
         env:
             EXTPIPES_IDP_CLIENT_ID: ${{ secrets.CLIENT_ID }}
-            EXTPIPES_IDP_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }} 
+            EXTPIPES_IDP_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
             EXTPIPES_CDF_HOST: ${{ env.CDF_HOST }}
             EXTPIPES_CDF_PROJECT: ${{ env.CDF_PROJECT }}
             EXTPIPES_IDP_TOKEN_URL: https://login.microsoftonline.com/${{ env.IDP_TENANT }}/oauth2/v2.0/token
@@ -108,3 +110,15 @@ jobs:
         with:
           config_file: ./configs/example-config-extpipes.yml
 ```
+# Contribute
+1. `poetry install`
+2. To run all checks locally - which is typically needed if the GitHub check is failing - e.g. you haven't set up `pre-commit` to run automatically:
+  -  `poetry run pre-commit install`  # Only needed if not installed
+  -  `poetry run pre-commit run --all-files`
+#### Versioning
+- Uses `semantic-release` to create version tags.
+- The rules for commit messages are conventional commits, see [conventionalcommits](https://www.conventionalcommits.org/en/v1.0.0-beta.4/#summary%3E)
+- Remark: If version needs change, before merge, make sure commit title has elements mentioned on `conventionalcommits`
+- Remark: with new version change, bump will update the version on `pyproject.toml` so no need to change version there.
+- Remark: version in `incubator/extpipes_cli/__init__` is used in main to add version on metadata.
+  This is not a part of semantic release but needs to be updated to upcoming version before version update.

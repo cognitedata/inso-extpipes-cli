@@ -1,5 +1,5 @@
 # follows the same parameter structure as the DB extractor configuration
-cognite: 
+cognite:
   host: ${EXTPIPES_CDF_HOST}
   project: ${EXTPIPES_CDF_PROJECT}
   #

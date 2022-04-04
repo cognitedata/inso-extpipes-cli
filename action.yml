@@ -45,4 +45,3 @@ runs:
     EXTPIPES_AUDIENCE: ${{ inputs.audience }}
     EXTPIPES_CLUSTER: "${{ inputs.cluster }}"
   args: ["deploy", "${{ inputs.config_file }}" , "--debug"]
-  
