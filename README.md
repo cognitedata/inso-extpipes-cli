@@ -49,7 +49,7 @@ Follow the initial setup first
 
 ## configuration example
 
-It starts with two common Cognite configuration blocks, which support 
+It starts with two common Cognite configuration blocks, which support
 environment-variable expansion:
 - `cognite`
 
