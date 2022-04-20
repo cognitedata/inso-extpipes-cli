@@ -6,7 +6,9 @@ inso-extpipes-cli
 - [scope of work](#scope-of-work)
   - [to be done](#to-be-done)
 - [how to run](#how-to-run)
-  - [configuration example](#configuration-example)
+  - [Configuration](#configuration)
+    - [Configuration for all commands](#configuration-for-all-commands)
+    - [Configuration for `deploy` command](#configuration-for-deploy-command)
   - [run local with poetry](#run-local-with-poetry)
   - [run local with Python](#run-local-with-python)
   - [run local with Docker](#run-local-with-docker)
@@ -47,15 +49,25 @@ Follow the initial setup first
 2. Change `.env_example` to `.env`
 3. Fill out `.env`
 
-## configuration example
+## Configuration
 
-It starts with two common Cognite configuration blocks, which support
-environment-variable expansion:
-- `cognite`
+A YAML configuration file must be passed as an argument when running the program.
+Different configuration file used for delete and prepare/deploy
+
+### Configuration for all commands
+
+All commands share a `cognite` and a `logger` section in the YAML manifest, which is common to our Cognite Database-Extractor configuration.
+
+The configuration file supports variable-expansion (`${BOOTSTRAP_**}`), which are provided either as
+1. environment-variables,
+2. through an `.env` file or
+3. command-line parameters
+
+Here is an example:
 
 ```yaml
-cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
-  # host: https://${EXTPIPES_CDF_CLUSTER}.cognitedata.com/
+# follows the same parameter structure as the DB extractor configuration
+cognite:
   host: ${EXTPIPES_CDF_HOST}
   project: ${EXTPIPES_CDF_PROJECT}
   #
@@ -67,25 +79,53 @@ cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${E
     scopes:
       - ${EXTPIPES_IDP_SCOPES}
     token_url: ${EXTPIPES_IDP_TOKEN_URL}
-```
 
-- `logger`
 
-```yaml
 logger:
   file:
     path: ./logs/test-deploy.log
     level: INFO
   console:
     level: INFO
+```
+### Configuration for `deploy` command
 
+In addition to the sections described above, the configuration file for `deploy` command requires three more sections, which will be loaded by Python
+
+```python
+@dataclass
+class ExtpipesConfig
+  ...
 ```
 
-Followed by the `extpipes-cli` specific configuration blocks:
+- `extpipe-pattern` - format-string of the extpipes names (and externalIds), at them moment only for documentation
+- `default-contacts` - list of contacts which will be added to extpipes as default, if not explict configured on pipeline level
+  - defined through list of
+    - `name`
+    - `email`
+    - `role`: `str`
+    - `send-notification` : `true|false`
+- `rawdbs`
+  - defined through list of
+    - `rawdb-name`
+    - `dataset-external-id`
+    - `short-name`
+    - `rawtables`
+      - defined through list of
+        - `rawtable-name`
+        - `pipelines`
+          - defined through list of
+            - `source`
+            - `schedule` : `Continuous|On trigger`
+            - `suffix`
+            - `contacts`
+              - defined through list of
+                - `name`
+                - `email`
+                - `role`: `str`
+                - `send-notification` : `true|false`
 
- - `extpipe-pattern`
- - `default-contacts`
- - `rawdbs`
+Configuration example:
 
 ```yaml
 # extpipe-pattern only documentation atm
