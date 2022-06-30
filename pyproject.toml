@@ -25,8 +25,8 @@ known_third_party = ["click", "pytest"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-cognite-extractor-utils = "^1.6.2"
-cognite-sdk = "^2.38.1"
+cognite-extractor-utils = "^2.2.0"
+# cognite-sdk = "^2.38.1"
 python-dotenv = "^0.15.0"
 click = "^8.0.1"
 types-retry = "^0.1.5"

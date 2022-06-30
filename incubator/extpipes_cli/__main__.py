@@ -422,9 +422,15 @@ class ExtpipesCore:
         _logger.info(delete_ids)
 
         # updated = self.client.extraction_pipelines.update([ep for ep in transformations if ep.external_id in existing_ids])
-        created: ExtractionPipelineList = self.client.extraction_pipelines.create(
-            [ep for external_id, ep in requested_dict.items() if external_id in new_ids]
-        )
+        # created: ExtractionPipelineList = self.client.extraction_pipelines.create(
+        #     [ep for external_id, ep in requested_dict.items() if external_id in new_ids]
+        # )
+        # xxx pa: switch to create extpipes one by one to bypass an issue
+        created: ExtractionPipelineList = [
+            self.client.extraction_pipelines.create(ep)
+            for external_id, ep in requested_dict.items()
+            if external_id in new_ids
+        ]
 
         self.client.extraction_pipelines.delete(external_id=delete_ids)
 
