@@ -6,6 +6,9 @@ inso-extpipes-cli
 - [scope of work](#scope-of-work)
   - [to be done](#to-be-done)
 - [how to run](#how-to-run)
+  - [Configuration](#configuration)
+    - [Configuration for all commands](#configuration-for-all-commands)
+    - [Configuration for `deploy` command](#configuration-for-deploy-command)
   - [run local with poetry](#run-local-with-poetry)
   - [run local with Python](#run-local-with-python)
   - [run local with Docker](#run-local-with-docker)
@@ -42,9 +45,141 @@ inso-extpipes-cli
 Follow the initial setup first
 
 1. Fill out relevant configurations from `configs`
-1.1. Fill out/change `extpipes` from `example-config-extpipes.yml`
+   - Fill out/change `extpipes` from `example-config-extpipesv2.yml`
 2. Change `.env_example` to `.env`
 3. Fill out `.env`
+
+## Configuration
+
+A YAML configuration file must be passed as an argument when running the program.
+Different configuration file used for delete and prepare/deploy
+
+### Configuration for all commands
+
+All commands share a `cognite` and a `logger` section in the YAML manifest, which is common to our Cognite Database-Extractor configuration.
+
+The configuration file supports variable-expansion (`${BOOTSTRAP_**}`), which are provided either as
+1. environment-variables,
+2. through an `.env` file or
+3. command-line parameters
+
+Here is an example:
+
+```yaml
+# follows the same parameter structure as the DB extractor configuration
+cognite:
+  host: ${EXTPIPES_CDF_HOST}
+  project: ${EXTPIPES_CDF_PROJECT}
+  #
+  # AAD IdP login credentials:
+  #
+  idp-authentication:
+    client-id: ${EXTPIPES_IDP_CLIENT_ID}
+    secret: ${EXTPIPES_IDP_CLIENT_SECRET}
+    scopes:
+      - ${EXTPIPES_IDP_SCOPES}
+    token_url: ${EXTPIPES_IDP_TOKEN_URL}
+
+
+logger:
+  file:
+    path: ./logs/test-deploy.log
+    level: INFO
+  console:
+    level: INFO
+```
+### Configuration for `deploy` command
+
+In addition to the sections described above, the configuration file for `deploy` command requires three more sections, which will be loaded by Python
+
+```python
+@dataclass
+class ExtpipesConfig
+  ...
+```
+
+- `extpipe-pattern` - format-string of the extpipes names (and externalIds), at them moment only for documentation
+- `default-contacts` - list of contacts which will be added to extpipes as default, if not explict configured on pipeline level
+  - defined through list of
+    - `name`
+    - `email`
+    - `role`: `str`
+    - `send-notification` : `true|false`
+- `rawdbs`
+  - defined through list of
+    - `rawdb-name`
+    - `dataset-external-id`
+    - `short-name`
+    - `rawtables`
+      - defined through list of
+        - `rawtable-name`
+        - `pipelines`
+          - defined through list of
+            - `source`
+            - `schedule` : `Continuous|On trigger`
+            - `suffix`
+            - `contacts`
+              - defined through list of
+                - `name`
+                - `email`
+                - `role`: `str`
+                - `send-notification` : `true|false`
+
+Configuration example:
+
+```yaml
+# extpipe-pattern only documentation atm
+extpipe-pattern: '{source}:{short-name}:{rawtable-name}:{suffix}'
+
+# can contain multiple contacts, can be overwritten on pipeline level
+default-contacts:
+  - name: Yours Truly
+    email: yours.truly@cognite.com
+    role: admin
+    send-notification: false
+
+# following configuration creates four extpipes with names:
+#   adf:src:001:sap_funcloc
+#   db:src:001:sap_equipment
+#   az-func:src:002:weather_europe:hourly
+#   az-func:src:002:weather_europe:daily
+rawdbs:
+  # list of raw-dbs > containing rawtables > containing pipelines
+  - rawdb-name: src:001:sap:rawdb
+    dataset-external-id: src:001:sap
+    short-name: src:001
+    rawtables:
+      - rawtable-name: sap_funcloc
+        pipelines:
+        # source is a short-name identifying the pipeline source being
+        # a 'db-extractor (db)', an 'Azure Function (az-func)',
+        # or 'Azure Data Factory (adf)', 'Python script (py)', ..
+        - source: adf
+          schedule: Continuous
+      - rawtable-name: sap_equipment
+        pipelines:
+        - source: db
+          schedule: Continuous
+          # default-contacts can be overwritten
+          contacts:
+            - name: Fizz Buzz
+              email: fizzbuzz@cognite.com
+              role: admin
+              send-notification: true
+  - rawdb-name: src:002:weather:rawdb
+    dataset-external-id: src:002:weather
+    short-name: src:002
+    rawtables:
+      - rawtable-name: weather_europe
+        # multiple pipelines for same raw-table
+        pipelines:
+        - source: az-func
+          suffix: hourly
+          schedule: Continuous
+        - source: az-func
+          suffix: daily
+          schedule: Continuous
+```
 ## run local with poetry
 
 ```bash
