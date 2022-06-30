@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "inso-extpipes-cli"
-version = "2.0.1"
+version = "2.0.2"
 description = "A CLI to deploy CDF Extraction Pipelines"
 authors = ["Peter Arwanitis <peter.arwanitis@cognite.com>", "Tugce Ozgur Oztetik <tugce.oztetik@cognite.com>"]
 license = "Apache-2.0"
