@@ -28,12 +28,10 @@ known_third_party = ["click", "pytest"]
 [tool.poetry.dependencies]
 python = "^3.9"
 cognite-extractor-utils = "^2.2.0"
-# extractor-utils pulls in matching python-dotenv
-# python-dotenv = "^0.19.2"
-cognite-sdk-core = {extras=["pandas"],version = "^2.39.1"}
+cognite-sdk-core = {extras=["pandas"],version = "^2.56.1"}
 # cognite-sdk = "^2.38.1"
-# reducing to sdk-core with only extra 'pandas' (avoiding fiona, geopandas dependencies)
-click = "^8.0.*"
+# python-dotenv = "^0.15.0"
+click = "^8.0.1"
 types-retry = "^0.1.5"
 
 [tool.poetry.dev-dependencies]
