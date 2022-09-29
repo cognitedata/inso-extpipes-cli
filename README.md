@@ -233,7 +233,7 @@ jobs:
       IDP_TENANT: abcde-12345
       CDF_HOST: https://bluefield.cognitedata.com/
       - name: Deploy extpipes
-        uses: cognitedata/inso-expipes-cli@main
+        uses: cognitedata/inso-extpipes-cli@main
         env:
             EXTPIPES_IDP_CLIENT_ID: ${{ secrets.CLIENT_ID }}
             EXTPIPES_IDP_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
