@@ -17,13 +17,12 @@ inso-extpipes-cli
       - [Versioning](#versioning)
 # scope of work
 
-- the prefix `inso-` names this solution as provided by Cognite Industry Solution team, and is not (yet) an offical supported cli / GitHub Action  from Cognite
-  - it provides a configuration driven deployment for Cognite Extraction Pipelines (named `extpipes` in short)
-  - support to run it
-    - from `poetry run`
-    - from `python -m`
-    - from `docker run`
-    - and as GitHub Action
+- it provides a configuration driven deployment for Cognite Extraction Pipelines (named `extpipes` in short)
+- support to run it
+  - from `poetry run`
+  - from `python -m`
+  - from `docker run`
+  - and as GitHub Action
 
 - templates used for implementation are
   - `cognitedata/transformation-cli`
