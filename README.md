@@ -178,7 +178,7 @@ extpipe-pattern: '{source}:{short-name}:{rawtable-name}:{suffix}'
 
 # new since v2.1.0
 # The default and recommended value is: true
-# default behavior is to keep the deployment in sync with configuration
+# to keep the deployment in sync with configuration
 # which means non configured extpipes get automatically deleted
 automatic-delete: true
 
@@ -188,11 +188,6 @@ default-contacts:
     email: yours.truly@cognite.com
     role: admin
     send-notification: false
-
-# The default and recommended value is: true
-# default behavior is to keep the deployment in sync with configuration
-# which means non configured extpipes get automatically deleted
-automatic-delete: true
 
 # following configuration creates four extpipes with names:
 #   adf:src:001:sap_funcloc
