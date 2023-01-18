@@ -6,8 +6,11 @@ inso-extpipes-cli
 - [scope of work](#scope-of-work)
   - [to be done](#to-be-done)
 - [how to run](#how-to-run)
+- [ExtPipes CLI commands](#extpipes-cli-commands)
+  - [`Deploy` command](#deploy-command)
   - [Configuration](#configuration)
     - [Configuration for all commands](#configuration-for-all-commands)
+      - [Environment variables](#environment-variables)
     - [Configuration for `deploy` command](#configuration-for-deploy-command)
   - [run local with poetry](#run-local-with-poetry)
   - [run local with Python](#run-local-with-python)
@@ -17,9 +20,8 @@ inso-extpipes-cli
       - [Versioning](#versioning)
 # scope of work
 
-- the prefix `inso-` names this solution as provided by Cognite Industry Solution team, and is not (yet) an offical supported cli / GitHub Action  from Cognite
-  - it provides a configuration driven deployment for Cognite Extraction Pipelines (named `extpipes` in short)
-  - support to run it
+- It provides a configuration driven deployment for Cognite Extraction Pipelines (named `extpipes` in short)
+- Support to run it
     - from `poetry run`
     - from `python -m`
     - from `docker run`
@@ -49,21 +51,50 @@ Follow the initial setup first
 2. Change `.env_example` to `.env`
 3. Fill out `.env`
 
+# ExtPipes CLI commands
+
+## `Deploy` command
+
+The extpipes-cli `deploy` command applies the configuration file settings to your CDF project and creates the necessary CDF Extraction-Pipelines.
+
+By default it is **automatically deleting** CDF Extraction-Pipelines which are not
+covered by the given configuration. You can deactivate this with the
+- `--automatic-delete no` parameter
+- or the `automatic-delete: false` in configuration-file.
+
+The command also is the configured to run used from a GitHub-Action workflow.
+
+```bash
+➟  extpipes-cli deploy --help
+Usage: extpipes-cli deploy [OPTIONS] [CONFIG_FILE]
+
+  Deploy a set of extpipes from a config-file
+
+Options:
+  --debug                      Print debug information
+  --automatic-delete [yes|no]  Purge extpipes which are not specified in
+                               config-file automatically (this is the default
+                               behavior, to keep deployment in sync with
+                               configuration)
+  -h, --help                   Show this message and exit.
+```
+
 ## Configuration
 
-A YAML configuration file must be passed as an argument when running the program.
-Different configuration file used for delete and prepare/deploy
+You must pass a YAML configuration file as an argument when running the program.
 
 ### Configuration for all commands
 
+_(January'23: only one command is supported right now, but the CLI solution can be extended in the future)_
+
 All commands share a `cognite` and a `logger` section in the YAML manifest, which is common to our Cognite Database-Extractor configuration.
 
-The configuration file supports variable-expansion (`${BOOTSTRAP_**}`), which are provided either as
-1. environment-variables,
-2. through an `.env` file or
-3. command-line parameters
+The configuration file supports variable-expansion (`${EXTPIPES_**}`), which are provided either
+1. As environment-variables,
+2. Through an `.env` file (Note: this doesn't overwrite existing environment variables.)
+3. As command-line parameters
 
-Here is an example:
+Below is an example configuration:
 
 ```yaml
 # follows the same parameter structure as the DB extractor configuration
@@ -80,32 +111,46 @@ cognite:
       - ${EXTPIPES_IDP_SCOPES}
     token_url: ${EXTPIPES_IDP_TOKEN_URL}
 
-
 logger:
   file:
-    path: ./logs/test-deploy.log
+    path: ./logs/deploy.log
     level: INFO
   console:
     level: INFO
 ```
+
+#### Environment variables
+
+Details about the environment variables:
+
+- `EXTPIPES_CDF_HOST`
+  - The URL to your CDF cluster.
+  - Example: `https://westeurope-1.cognitedata.com`
+- `EXTPIPES_CDF_PROJECT`
+  - The CDF project.
+- `EXTPIPES_IDP_CLIENT_ID`
+  - The client ID of the app registration you have created for the CLI.
+- `EXTPIPES_IDP_CLIENT_SECRET`
+  - The client secret you have created for the app registration,
+- `EXTPIPES_IDP_TOKEN_URL = https://login.microsoftonline.com/<tenant id>/oauth2/v2.0/token`
+  - If you're using Azure AD, replace `<tenant id>` with your Azure tenant ID.
+- `EXTPIPES_IDP_SCOPES`
+  - Usually: `https://<cluster-name>.cognitedata.com/.default`
+
 ### Configuration for `deploy` command
 
-In addition to the sections described above, the configuration file for `deploy` command requires three more sections, which will be loaded by Python
+In addition to the sections described above, the configuration file for `deploy` command requires more sections (some of them optional):
 
-```python
-@dataclass
-class ExtpipesConfig
-  ...
-```
 
-- `extpipe-pattern` - format-string of the extpipes names (and externalIds), at them moment only for documentation
-- `default-contacts` - list of contacts which will be added to extpipes as default, if not explict configured on pipeline level
+- `extpipe-pattern` - optional format-string of the extpipes names (and externalIds), at them moment only for documentation and not used from implementation
+- `default-contacts` - optional list of contacts which will be added to extpipes as default, if not explict configured on pipeline level
   - defined through list of
     - `name`
     - `email`
     - `role`: `str`
     - `send-notification` : `true|false`
-- `rawdbs`
+- `automatic-delete` - `true|false` optional flag, defaults to `true`
+- `rawdbs` (**your main configuration goes here**)
   - defined through list of
     - `rawdb-name`
     - `dataset-external-id`
@@ -130,6 +175,12 @@ Configuration example:
 ```yaml
 # extpipe-pattern only documentation atm
 extpipe-pattern: '{source}:{short-name}:{rawtable-name}:{suffix}'
+
+# new since v2.1.0
+# The default and recommended value is: true
+# to keep the deployment in sync with configuration
+# which means non configured extpipes get automatically deleted
+automatic-delete: true
 
 # can contain multiple contacts, can be overwritten on pipeline level
 default-contacts:
@@ -233,7 +284,9 @@ jobs:
       IDP_TENANT: abcde-12345
       CDF_HOST: https://bluefield.cognitedata.com/
       - name: Deploy extpipes
-        uses: cognitedata/inso-expipes-cli@main
+        # best practice is to use a tagged release (and not '@main')
+        # find a released tag here: https://github.com/cognitedata/inso-extpipes-cli/releases
+        uses: cognitedata/inso-expipes-cli@v2.1.0
         env:
             EXTPIPES_IDP_CLIENT_ID: ${{ secrets.CLIENT_ID }}
             EXTPIPES_IDP_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}

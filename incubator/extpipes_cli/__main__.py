@@ -77,9 +77,13 @@ _logger = logging.getLogger(__name__)
 # description: string [ 1 .. 500 ] characters
 #
 
+
 # mixin 'str' to 'Enum' to support comparison to string-values
 # https://docs.python.org/3/library/enum.html#others
 # https://stackoverflow.com/a/63028809/1104502
+class YesNoType(str, Enum):
+    yes = "yes"
+    no = "no"
 
 
 class ScheduleType(str, Enum):
@@ -132,16 +136,30 @@ class ExtpipesConfig:
 
     logger: LoggingConfig
     cognite: CogniteConfig
-    # extpipes: Dict[str, Any] # simplify
 
-    # f-string
+    # here goes the main configuration
     rawdbs: List[Rawdb]
+
+    # not implemented yet, for self-documentation only
     extpipe_pattern: Optional[str]
+
+    # load_yaml includes mapping from several string like 'yes|no' to boolean
+    automatic_delete: Optional[bool]
+
     # with default values must come last
-    default_contacts: Optional[List[Contact]] = field(default_factory=list)
+    default_contacts: Optional[List[Contact]]
 
     # optional for OIDC authentication
     token_custom_args: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        """Handle default optional field settings"""
+
+        # check each property for None and set default value
+        if self.automatic_delete is None:
+            self.automatic_delete = True
+        if self.default_contacts is None:
+            self.default_contacts = field(default_factory=list)
 
     @classmethod
     def from_yaml(cls, filepath):
@@ -191,7 +209,7 @@ class ExtpipesCore:
     def __init__(self, configpath: str):
         self.config: ExtpipesConfig = ExtpipesConfig.from_yaml(configpath)
 
-        # print(f'self.config= {self.config}')
+        # print(f'{self.config=}')
 
         # make sure the optional folders in logger.file.path exists
         # to avoid: FileNotFoundError: [Errno 2] No such file or directory: '/github/workspace/logs/test-deploy.log'
@@ -200,6 +218,9 @@ class ExtpipesCore:
             (Path.cwd() / self.config.logger.file.path).parent.mkdir(parents=True, exist_ok=True)
 
         self.config.logger.setup_logging()
+
+        # [OPTIONAL] default: True
+        self.automatic_delete: bool = self.config.automatic_delete
 
         _logger.info("Starting CDF Extpipes configuration")
 
@@ -377,7 +398,12 @@ class ExtpipesCore:
     Manually created extpipes are not affected by this approach
     """
 
-    def deploy(self):
+    def deploy(self, automatic_delete: YesNoType):
+
+        # check click parameter and map from YesNoType to bool
+        # if provided they override configuration or defaults from yaml-config
+        if automatic_delete:
+            self.automatic_delete = automatic_delete == YesNoType.yes
 
         # get existing extpipes
         """
@@ -414,12 +440,19 @@ class ExtpipesCore:
         #     print(i, extpipe_name, extpipe)
 
         new_ids: External_ids = get_new_ids(requested_dict.keys(), existing_extpipes_dict.keys())
-        _logger.info("## to create: extraction pipelines")
+        _logger.info("## extraction pipelines to create:")
         _logger.info(new_ids)
 
-        delete_ids: External_ids = get_delete_ids(requested_dict.keys(), existing_extpipes_dict.keys())
-        _logger.info("## to delete: extraction pipelines")
-        _logger.info(delete_ids)
+        delete_ids: External_ids = []
+        if self.automatic_delete:
+            # delete non specified (configured) extpipes, to keep the deployment in sync
+            delete_ids = get_delete_ids(requested_dict.keys(), existing_extpipes_dict.keys())
+            _logger.info("## extraction pipelines to delete:")
+            _logger.info(delete_ids)
+
+            self.client.extraction_pipelines.delete(external_id=delete_ids)
+        else:
+            _logger.info("## skipping automatic-delete: configuration deactivated")
 
         # updated = self.client.extraction_pipelines.update([ep for ep in transformations if ep.external_id in existing_ids])
         # created: ExtractionPipelineList = self.client.extraction_pipelines.create(
@@ -431,8 +464,6 @@ class ExtpipesCore:
             for external_id, ep in requested_dict.items()
             if external_id in new_ids
         ]
-
-        self.client.extraction_pipelines.delete(external_id=delete_ids)
 
         _logger.info(f"Extraction Pipelines: created: {len(created)}, deleted: {len(delete_ids)}")
 
@@ -522,8 +553,15 @@ def extpipes_cli(
     is_flag=True,
     help="Print debug information",
 )
+@click.option(
+    "--automatic-delete",
+    # default="yes", # default defined in 'ExtpipesConfig'
+    type=click.Choice(["yes", "no"], case_sensitive=False),
+    help="Purge extpipes which are not specified in config-file automatically "
+    "(this is the default behavior, to keep deployment in sync with configuration)",
+)
 @click.pass_obj
-def deploy(obj: Dict, config_file: str, debug: bool = False) -> None:
+def deploy(obj: Dict, config_file: str, automatic_delete: YesNoType, debug: bool = False) -> None:
 
     click.echo(click.style("Deploying Extraction Pipelines...", fg="red"))
 
@@ -535,11 +573,8 @@ def deploy(obj: Dict, config_file: str, debug: bool = False) -> None:
         # load .env from file if exists
         load_dotenv()
 
-        # _logger.debug(f'os.environ = {os.environ}')
-        # print(f'os.environ= {os.environ}')
-
         # run deployment
-        (ExtpipesCore(config_file).validate_config().deploy())
+        (ExtpipesCore(config_file).validate_config().deploy(automatic_delete=automatic_delete))
 
         click.echo(click.style("Extraction Pipelines deployed", fg="green"))
 
