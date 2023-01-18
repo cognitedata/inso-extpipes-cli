@@ -27,6 +27,12 @@ logger:
 # extpipe-pattern only documentation atm
 extpipe-pattern: '{source}:{short-name}:{rawtable-name}:{suffix}'
 
+# new since v2.1.0
+# The default and recommended value is: true
+# to keep the deployment in sync with configuration
+# which means non configured extpipes get automatically deleted
+automatic-delete: true
+
 # can contain multiple contacts, can be overwritten on pipeline level
 default-contacts:
   - name: Yours Truly
