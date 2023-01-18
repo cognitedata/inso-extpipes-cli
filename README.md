@@ -20,9 +20,8 @@ inso-extpipes-cli
       - [Versioning](#versioning)
 # scope of work
 
-- the prefix `inso-` names this solution as provided by Cognite Industry Solution team, and is not (yet) an offical supported cli / GitHub Action  from Cognite
-  - it provides a configuration driven deployment for Cognite Extraction Pipelines (named `extpipes` in short)
-  - support to run it
+- It provides a configuration driven deployment for Cognite Extraction Pipelines (named `extpipes` in short)
+- Support to run it
     - from `poetry run`
     - from `python -m`
     - from `docker run`
@@ -290,7 +289,9 @@ jobs:
       IDP_TENANT: abcde-12345
       CDF_HOST: https://bluefield.cognitedata.com/
       - name: Deploy extpipes
-        uses: cognitedata/inso-expipes-cli@main
+        # best practice is to use a tagged release (and not '@main')
+        # find a released tag here: https://github.com/cognitedata/inso-extpipes-cli/releases
+        uses: cognitedata/inso-expipes-cli@v2.1.0
         env:
             EXTPIPES_IDP_CLIENT_ID: ${{ secrets.CLIENT_ID }}
             EXTPIPES_IDP_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
