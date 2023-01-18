@@ -77,12 +77,14 @@ _logger = logging.getLogger(__name__)
 # description: string [ 1 .. 500 ] characters
 #
 
+
 # mixin 'str' to 'Enum' to support comparison to string-values
 # https://docs.python.org/3/library/enum.html#others
 # https://stackoverflow.com/a/63028809/1104502
 class YesNoType(str, Enum):
     yes = "yes"
     no = "no"
+
 
 class ScheduleType(str, Enum):
     continuous = "Continuous"
@@ -158,7 +160,6 @@ class ExtpipesConfig:
             self.automatic_delete = True
         if self.default_contacts is None:
             self.default_contacts = field(default_factory=list)
-
 
     @classmethod
     def from_yaml(cls, filepath):
@@ -453,7 +454,6 @@ class ExtpipesCore:
         else:
             _logger.info("## skipping automatic-delete: configuration deactivated")
 
-
         # updated = self.client.extraction_pipelines.update([ep for ep in transformations if ep.external_id in existing_ids])
         # created: ExtractionPipelineList = self.client.extraction_pipelines.create(
         #     [ep for external_id, ep in requested_dict.items() if external_id in new_ids]
@@ -558,14 +558,10 @@ def extpipes_cli(
     # default="yes", # default defined in 'ExtpipesConfig'
     type=click.Choice(["yes", "no"], case_sensitive=False),
     help="Purge extpipes which are not specified in config-file automatically "
-         "(this is the default behavior, to keep deployment in sync with configuration)",
+    "(this is the default behavior, to keep deployment in sync with configuration)",
 )
 @click.pass_obj
-def deploy(
-    obj: Dict,
-    config_file: str,
-    automatic_delete: YesNoType,
-    debug: bool = False) -> None:
+def deploy(obj: Dict, config_file: str, automatic_delete: YesNoType, debug: bool = False) -> None:
 
     click.echo(click.style("Deploying Extraction Pipelines...", fg="red"))
 
@@ -576,9 +572,6 @@ def deploy(
     try:
         # load .env from file if exists
         load_dotenv()
-
-        # _logger.debug(f'os.environ = {os.environ}')
-        # print(f'os.environ= {os.environ}')
 
         # run deployment
         (ExtpipesCore(config_file).validate_config().deploy(automatic_delete=automatic_delete))
