@@ -38,7 +38,7 @@ inso-extpipes-cli
 
 - [x] `.dockerignore` (pycache)
 - [x] logs folder handling (docker volume mount)
-- [ ] logger.info() or print() or click.echo(click.style(..))
+- [x] logger.info() or print() or click.echo(click.style(..))
     - logger debug support
 - [ ] compile as EXE (when Python is not available on customer server)
   - code-signed exe required for Windows
@@ -162,6 +162,7 @@ In addition to the sections described above, the configuration file for `deploy`
           - defined through list of
             - `source`
             - `schedule` : `Continuous|On trigger`
+            - `skip-rawtable` : `true|false` (default `false`)
             - `suffix`
             - `contacts`
               - defined through list of
@@ -207,6 +208,12 @@ rawdbs:
         # or 'Azure Data Factory (adf)', 'Python script (py)', ..
         - source: adf
           schedule: Continuous
+          # since v2.2.0 'skip-rawtable' with default 'false' exists
+          # It allows to skip creation of the rawtable,
+          # to avoid automatic creation in case it is not needed
+          # FYI: Next v3 release will change the config-schema, to express
+          # raw-tables not being a leading, but optional element
+          skip-rawtable: false
       - rawtable-name: sap_equipment
         pipelines:
         - source: db

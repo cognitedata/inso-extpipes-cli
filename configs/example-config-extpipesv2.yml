@@ -1,25 +1,3 @@
-# follows the same parameter structure as the DB extractor configuration
-cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
-  # host: https://${EXTPIPES_CDF_CLUSTER}.cognitedata.com/
-  host: ${EXTPIPES_CDF_HOST}
-  project: ${EXTPIPES_CDF_PROJECT}
-  #
-  # AAD IdP login credentials:
-  #
-  idp-authentication:
-    client-id: ${EXTPIPES_IDP_CLIENT_ID}
-    secret: ${EXTPIPES_IDP_CLIENT_SECRET}
-    scopes:
-      - ${EXTPIPES_IDP_SCOPES}
-    token_url: ${EXTPIPES_IDP_TOKEN_URL}
-
-logger:
-  file:
-    path: ./logs/test-deploy.log
-    level: INFO
-  console:
-    level: INFO
-
 #        name: string [ 1 .. 140 ] characters
 #  externalId: string [ 1 .. 255 ] characters
 # description: string [ 1 .. 500 ] characters
@@ -57,6 +35,12 @@ rawdbs:
         # a 'db-extractor (db)', an 'Azure Function (az-func)',
         # or 'Azure Data Factory (adf)', 'Python script (py)', ..
         - source: adf
+          # since v2.2.0 'skip-rawtable' with default 'false' exists
+          # it allows to skip creation of the rawtable,
+          # to avoid automatic creation in case it is not needed
+          # FYI: Next v3 release will change the config-schema, to express
+          # raw-tables not being a leading, but optional element
+          skip-rawtable: false
           schedule: Continuous
       - rawtable-name: sap_equipment
         pipelines:
@@ -68,6 +52,15 @@ rawdbs:
               email: fizzbuzz@cognite.com
               role: admin
               send-notification: true
+  - rawdb-name: src:all:rawdb
+    dataset-external-id: src:all
+    short-name: src:all
+    rawtables:
+      - rawtable-name: skiptable
+        pipelines:
+        - source: az-func
+          skip-rawtable: true
+          schedule: Continuous
   - rawdb-name: src:002:weather:rawdb
     dataset-external-id: src:002:weather
     short-name: src:002
@@ -81,3 +74,26 @@ rawdbs:
         - source: az-func
           suffix: daily
           schedule: Continuous
+
+
+# follows the same parameter structure as the DB extractor configuration
+cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
+  # host: https://${EXTPIPES_CDF_CLUSTER}.cognitedata.com/
+  host: ${EXTPIPES_CDF_HOST}
+  project: ${EXTPIPES_CDF_PROJECT}
+  #
+  # AAD IdP login credentials:
+  #
+  idp-authentication:
+    client-id: ${EXTPIPES_IDP_CLIENT_ID}
+    secret: ${EXTPIPES_IDP_CLIENT_SECRET}
+    scopes:
+      - ${EXTPIPES_IDP_SCOPES}
+    token_url: ${EXTPIPES_IDP_TOKEN_URL}
+
+logger:
+  file:
+    path: ./logs/test-deploy.log
+    level: INFO
+  console:
+    level: INFO
