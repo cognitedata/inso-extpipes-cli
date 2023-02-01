@@ -108,6 +108,7 @@ class Pipeline:
     suffix: Optional[str]
     # None/On trigger/Continuous/cron regex
     contacts: Optional[List[Contact]] = field(default_factory=list)
+    skip_rawtable: Optional[bool] = False
 
 
 @dataclass
@@ -233,7 +234,7 @@ class ExtpipesCore:
         self, resource_type: str, external_id: str, ignore_unknown_ids: bool = False
     ) -> Union[str, None]:
 
-        _logger.debug(f"external_id= {external_id}")
+        _logger.debug(f"resolve {resource_type=} {external_id=}")
 
         assert resource_type in supported_resource_types, f"Not supported resource_type= {resource_type}"
         resource = getattr(self.client, resource_type).retrieve(external_id=external_id)
@@ -296,7 +297,11 @@ class ExtpipesCore:
                 },
                 # [{"dbName": "value", "tableName" : "value"}]
                 # following the incubator-dataops naming conventions
-                raw_tables=[{"dbName": rawdb.rawdb_name, "tableName": rawtable.rawtable_name}],
+                raw_tables=(
+                    [{"dbName": rawdb.rawdb_name, "tableName": rawtable.rawtable_name}]
+                    if not pipeline.skip_rawtable
+                    else []
+                ),
                 contacts=[
                     ExtractionPipelineContact(**dataclasses.asdict(contact))
                     for contact in (pipeline.contacts or self.config.default_contacts)
@@ -325,22 +330,18 @@ class ExtpipesCore:
                     (rawdb.rawdb_name, rawtable.rawtable_name)
                     for rawdb in self.config.rawdbs
                     for rawtable in rawdb.rawtables
+                    # only request raw_table if
+                    # if at least one pipeline is configured with 'skip-rawtable: false'
+                    # all() returns False if at least one element is False
+                    if not all([pipeline.skip_rawtable for pipeline in rawtable.pipelines])
                 ]
             )
         )
-        # requested_rawdb_tables = list(set([
-        #     (f'{group}:rawdb', tableName.split(':')[0])
-        #         for (group, extpipe) in self.config.extpipes.items()
-        #         for (tableName, pipelines) in extpipe['pipelines'].items()
-        #     ]))
 
         requested_data_set_external_ids = list(set([rawdb.dataset_external_id for rawdb in self.config.rawdbs]))
-        # requested_data_set_external_ids = list(set([f'{group}'
-        #                                             for group in self.config.extpipes.keys()
-        #                                         ]))
 
-        _logger.info(requested_rawdb_tables)
-        _logger.info(requested_data_set_external_ids)
+        _logger.info(f"{requested_rawdb_tables=}")
+        _logger.info(f"{requested_data_set_external_ids=}")
 
         resolved_external_ids = list(
             filter(partial(self.resolve_external_id, "data_sets"), requested_data_set_external_ids)
@@ -362,7 +363,6 @@ class ExtpipesCore:
             # loop through a dummy None table, in case of empty
             for table in (self.client.raw.tables.list(db_name=db.name, limit=None) or [None])
         ]
-        existing_db_tables
 
         # missing dbs are a failure in our dataops approach, as all must be precreated
         assert set([r[0] for r in requested_rawdb_tables]).issubset(
