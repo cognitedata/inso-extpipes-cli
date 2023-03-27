@@ -1,0 +1,125 @@
+extpipes:
+  features:
+    #        name: string [ 1 .. 140 ] characters
+    #  externalId: string [ 1 .. 255 ] characters
+    # description: string [ 1 .. 500 ] characters
+
+    # extpipe-pattern only documentation atm
+    extpipe-pattern: '{source}:{short-name}:{rawtable-name}:{suffix}'
+
+    # new since v2.1.0
+    # The default and recommended value is: true
+    # to keep the deployment in sync with configuration
+    # which means non configured extpipes get automatically deleted
+    automatic-delete: true
+
+    # can contain multiple contacts, can be overwritten on pipeline level
+    default-contacts:
+      - name: Yours Truly
+        email: yours.truly@cognite.com
+        role: admin
+        send-notification: false
+
+    # TODO: how many features / defaults do we want to support?
+
+  pipelines:
+      # required
+      # max 255 char, External Id provided by client
+      # TODO: no magix here, straight names or should we provide a prefixing or `features.extpipe-pattern`?
+      # parameter names from API v1 with "CamelCase" transformed to lowercase "hyphen-case"
+      # TODO: just duplicate all of this just because it has a different schedule and extId?
+      # maybe use yaml anchors / alias feature to minimize duplication
+    - external-id: az-func:src:002:sap_funcloc:hourly
+      # optional, default to external-id
+      name: az-func:src:001:sap:hourly
+      # optional
+      description: describe or defaults to auto-generated description, that it is "deployed through extpipes-cli@v3.0.0"
+      # optional, for deployments w/o full scoping?
+      dataset-external-id: src:001:sap
+      # optional: string or null^(On trigger|Continuous)|(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|s|m|h))+)|((((\d+,)+\d+|(\d+([/\-])\d+)|\d+|\*(/\d+)?) ?){5,7})$
+      # "On trigger", "Continuous" or cron expression
+      schedule: Continuous
+      # optional [{},{}]
+      # defaults to features.default-contacts (if exist)
+      contacts:
+        - name: Fizz Buzz
+          email: fizzbuzz@cognite.com
+          role: admin
+          send-notification: true
+      # optional
+      source: az-func
+      # optional {}
+      metadata:
+          version: extpipes-cli@v3.0.1
+      # optional max 10000 char
+      # Documentation text field, supports Markdown for text formatting.
+      # TODO: simple option to link to another file in yaml? 10k can be quite long?!
+      documentation: Documentation which can include Mearmaid diagrams?
+      # optional
+      # Time in minutes to pass without any Run. Null if extraction pipeline is not checked.
+      notification-config:
+        # NOTE: what is that for a parameter name?!
+        allowed-not-seen-range-in-minutes: 30
+      # optional
+      # Usually user email is expected here, defaults to extpipes + version?
+      created-by: extpipes-cli@v3.1.0
+
+      # optional [{},{}]
+      raw-tables:
+        - db-name: src:001:sap:rawdb
+          table-name: sap_funcloc
+
+      # optional [{},{}]
+      # https://docs.cognite.com/api/v1/#tag/Extraction-Pipelines-Config/operation/createExtPipeConfig
+      extpipes-configs:
+          # optional
+          # TODO: which length limit?
+        - description: descripe the config, or autogenerate?
+          # TODO: offcially optional, but in extpipes it should be mandatory
+          # TODO: length limit?
+          # not incl. the config here, but check and load it from a relative folder path, and embed it as string
+          config-file: extpipes-config/sap001config.yaml
+
+
+
+
+# follows the same parameter structure as the DB extractor configuration
+cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
+  # host: https://${EXTPIPES_CDF_CLUSTER}.cognitedata.com/
+  host: ${EXTPIPES_CDF_HOST}
+  project: ${EXTPIPES_CDF_PROJECT}
+  #
+  # AAD IdP login credentials:
+  #
+  idp-authentication:
+    client-id: ${EXTPIPES_IDP_CLIENT_ID}
+    secret: ${EXTPIPES_IDP_CLIENT_SECRET}
+    scopes:
+      - ${EXTPIPES_IDP_SCOPES}
+    token_url: ${EXTPIPES_IDP_TOKEN_URL}
+
+logging:
+  version: 1
+  formatters:
+    formatter:
+      # class: "tools.formatter.StackdriverJsonFormatter"
+      format: "[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s"
+  handlers:
+    file:
+      class: "logging.FileHandler"
+      filename: ./logs/deploy-trading.log
+      formatter: "formatter"
+      mode: "w"
+      level: "DEBUG"
+    console:
+      class: "logging.StreamHandler"
+      level: "DEBUG"
+      formatter: "formatter"
+      stream: "ext://sys.stderr"
+  root:
+    level: "DEBUG"
+    handlers: [ "console", "file" ]
+  loggers:
+    cognite-sdk:
+      level: "DEBUG"
+      handlers: [ "console"]
