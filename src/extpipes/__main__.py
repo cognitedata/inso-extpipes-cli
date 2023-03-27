@@ -32,7 +32,6 @@
 # * Missing RAW Tables will be created
 # * `schedule` only supports: `On trigger | Continuous | <cron expression> | null`
 
-import dataclasses
 import logging
 from typing import Dict, Optional
 

@@ -3,16 +3,15 @@ from pathlib import Path
 import pytest
 from rich import print
 
-from tests.constants import ROOT_DIRECTORY
-
-from ..src.app_config import CommandMode
-from ..src.app_container import (  # PrepareCommandContainer,
+from extpipes.app_config import CommandMode
+from extpipes.app_container import (  # PrepareCommandContainer,
     ContainerSelector,
     DeleteCommandContainer,
     DeployCommandContainer,
     DiagramCommandContainer,
     init_container,
 )
+from tests.constants import ROOT_DIRECTORY
 
 print(ROOT_DIRECTORY)
 
