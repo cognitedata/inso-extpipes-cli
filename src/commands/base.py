@@ -121,7 +121,7 @@ class CommandBase:
             set(
                 [
                     (rawdb.rawdb_name, rawtable.rawtable_name)
-                    for rawdb in self.config.rawdbs
+                    for rawdb in self.extpipes_config.rawdbs
                     for rawtable in rawdb.rawtables
                     # only request raw_table if
                     # if at least one pipeline is configured with 'skip-rawtable: false'
@@ -131,7 +131,9 @@ class CommandBase:
             )
         )
 
-        requested_data_set_external_ids = list(set([rawdb.dataset_external_id for rawdb in self.config.rawdbs]))
+        requested_data_set_external_ids = list(
+            set([rawdb.dataset_external_id for rawdb in self.extpipes_config.rawdbs])
+        )
 
         logging.info(f"{requested_rawdb_tables=}")
         logging.info(f"{requested_data_set_external_ids=}")

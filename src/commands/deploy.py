@@ -78,12 +78,13 @@ class CommandDeploy(CommandBase):
             # delete non specified (configured) extpipes, to keep the deployment in sync
             delete_ids = get_delete_ids(requested_dict.keys(), existing_extpipes_dict.keys())
             logging.info("## extraction pipelines to delete:")
-            logging.info(delete_ids)
+            logging.info(f"{delete_ids=}")
 
             if self.is_dry_run:
                 logging.info(f"Dry run - Extraction Piplines deleting with extIds: {delete_ids=}")
             else:
-                self.client.extraction_pipelines.delete(external_id=delete_ids)
+                if delete_ids:
+                    self.client.extraction_pipelines.delete(external_id=delete_ids)
 
         else:
             logging.info("## skipping automatic-delete: configuration deactivated")

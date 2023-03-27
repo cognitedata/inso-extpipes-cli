@@ -211,6 +211,7 @@ def deploy(obj: Dict, config_file: str, automatic_delete: YesNoType, debug: bool
         (
             CommandDeploy(config_file, command=CommandMode.DEPLOY, debug=obj["debug"])
             .dry_run(obj["dry_run"])
+            .validate_config()
             .command(
                 automatic_delete=automatic_delete,
             )
