@@ -65,6 +65,16 @@ covered by the given configuration. You can deactivate this with the
 The command also is the configured to run used from a GitHub-Action workflow.
 
 ```bash
+➟  extpipes-cli --help
+Usage: extpipes-cli [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --version                Show the version and exit.
+  --dry-run [yes|no]       Log only planned CDF API actions while doing
+                           nothing. Defaults to 'no'.
+```
+
+```bash
 ➟  extpipes-cli deploy --help
 Usage: extpipes-cli deploy [OPTIONS] [CONFIG_FILE]
 
@@ -111,12 +121,28 @@ cognite:
       - ${EXTPIPES_IDP_SCOPES}
     token_url: ${EXTPIPES_IDP_TOKEN_URL}
 
-logger:
-  file:
-    path: ./logs/deploy.log
-    level: INFO
-  console:
-    level: INFO
+# https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
+logging:
+  version: 1
+  formatters:
+    formatter:
+      # class: "tools.formatter.StackdriverJsonFormatter"
+      format: "[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s"
+  handlers:
+    file:
+      class: "logging.FileHandler"
+      filename: ./logs/deploy-trading.log
+      formatter: "formatter"
+      mode: "w"
+      level: "DEBUG"
+    console:
+      class: "logging.StreamHandler"
+      level: "DEBUG"
+      formatter: "formatter"
+      stream: "ext://sys.stderr"
+  root:
+    level: "DEBUG"
+    handlers: [ "console", "file" ]
 ```
 
 #### Environment variables
