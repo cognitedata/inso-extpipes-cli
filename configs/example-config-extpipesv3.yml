@@ -54,7 +54,7 @@ extpipes:
       # optional max 10000 char
       # Documentation text field, supports Markdown for text formatting.
       # TODO: simple option to link to another file in yaml? 10k can be quite long?!
-      documentation: Documentation which can include Mearmaid diagrams?
+      documentation: Documentation which can include Mermaid diagrams?
       # optional
       # Time in minutes to pass without any Run. Null if extraction pipeline is not checked.
       notification-config:
@@ -69,18 +69,21 @@ extpipes:
         - db-name: src:001:sap:rawdb
           table-name: sap_funcloc
 
-      # optional [{},{}]
+      # optional {}
+      # exactly one
       # https://docs.cognite.com/api/v1/#tag/Extraction-Pipelines-Config/operation/createExtPipeConfig
-      extpipes-configs:
+      extpipe-config:
           # optional
           # TODO: which length limit?
-        - description: descripe the config, or autogenerate?
-          # TODO: offcially optional, but in extpipes it should be mandatory
+          description: describe the config, or autogenerate?
+          # TODO: officially optional, but in extpipes it should be mandatory
           # TODO: length limit?
           # not incl. the config here, but check and load it from a relative folder path, and embed it as string
-          config-file: extpipes-config/sap001config.yaml
-
-
+          # config-file: extpipes-config/sap001config.yaml
+          # str
+          # TODO: only push it to CDF if changed since last time, otherwise it will create a new revision
+          config: |
+            nested yaml/json/ini which is simply a string for this config
 
 
 # follows the same parameter structure as the DB extractor configuration
@@ -98,6 +101,9 @@ cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${E
       - ${EXTPIPES_IDP_SCOPES}
     token_url: ${EXTPIPES_IDP_TOKEN_URL}
 
+# https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
+# https://docs.python.org/3/howto/logging-cookbook.html
+# standard Python logging-dict
 logging:
   version: 1
   formatters:

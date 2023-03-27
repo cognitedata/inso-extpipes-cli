@@ -64,7 +64,7 @@ extpipes:
             skip-rawtable: true
             schedule: Continuous
     - rawdb-name: src:002:weather:rawdb
-      dataset-external-id: src:002:weather
+      dataset-external-id: src:002:weather:dataset
       short-name: src:002
       rawtables:
         - rawtable-name: weather_europe
