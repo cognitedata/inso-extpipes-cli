@@ -13,11 +13,13 @@ inso-extpipes-cli
       - [Environment variables](#environment-variables)
     - [Configuration for `deploy` command](#configuration-for-deploy-command)
   - [run local with poetry](#run-local-with-poetry)
-  - [run local with Python](#run-local-with-python)
-  - [run local with Docker](#run-local-with-docker)
+  - [run local with Python and Poetry](#run-local-with-python-and-poetry)
+  - [Run locally with Docker](#run-locally-with-docker)
+    - [production build](#production-build)
+    - [development build](#development-build)
   - [run as github action](#run-as-github-action)
 - [Contribute](#contribute)
-      - [Versioning](#versioning)
+  - [Semantic Versioning](#semantic-versioning)
 # scope of work
 
 - It provides a configuration driven deployment for Cognite Extraction Pipelines (named `extpipes` in short)
@@ -274,33 +276,50 @@ poetry update
 poetry run extpipes-cli deploy --debug configs/example-config-extpipes.yml
 ```
 
-## run local with Python
+## run local with Python and Poetry
 
 ```bash
-export PYTHONPATH=.
-
-python incubator/extpipes_cli/__main__.py deploy configs/example-config-extpipes.yml
+poetry shell
+# extpipes-cli is defined in pyproject.toml
+extpipes-cli deploy ./configs/example-config-extpipes.yml
 ```
 
-## run local with Docker
+## Run locally with Docker
+
+### production build
 - `.dockerignore` file
 - volumes for `configs` (to read) and `logs` folder (to write)
 
 ```bash
-docker build -t incubator/extpipes:v1.0 -t incubator/extpipes:latest .
+docker build -t extpipes-cli:prod --target=production .
 
 # ${PWD} because only absolute paths can be mounted
-docker run -it --volume ${PWD}/configs:/configs --volume ${PWD}/logs:/logs  --env-file=.env incubator/extpipes deploy /configs/example-config-extpipes.yml
+# poerty project is deplopyed to /opt/extpipes-cli/
+docker run --env-file=.env --volume ${PWD}/configs:/configs --volume ${PWD}/logs:/opt/extpipes-cli/logs extpipes-cli:prod deploy /configs/config-deploy-example.yml
 ```
 
-Try to debug container
-- requires override of `ENTRYPOINT`
-  - `/bin/bash` not available but `sh`
-- no `ls` available :/
+### development build
+
+Debugging the Docker container with all dev-dependencies and poetry installed
+
+- volumes for `configs` (to read) and `logs` folder (to write)
+- volumes for `src` (to read/write)
 
 ```bash
-docker run -it --volume ${PWD}/configs:/configs --env-file=.env --entrypoint /bin/sh incubator/extpipes
+# using the 'development' target of the Dockerfile multi-stages
+➟  docker build -t extpipes-cli:dev --target=development .
+
+# start bash in container
+➟  docker run --env-file=.env --volume ${PWD}/configs:/configs --volume ${PWD}/logs:/logs --volume ${PWD}/src://opt/extpipes-cli/src -it --entrypoint /bin/bash extpipes-cli:dev
+
+# run project from inside container
+> poetry shell
+> extpipes-cli --help
+> extpipes-cli --dry-run yes deploy /configs/config-deploy-example.yml
+# logs are available on your host in mounted '.logs/' folder
+# 'src/' changes are mounted to your host ./src folder
 ```
+
 
 ## run as github action
 
@@ -319,7 +338,7 @@ jobs:
       - name: Deploy extpipes
         # best practice is to use a tagged release (and not '@main')
         # find a released tag here: https://github.com/cognitedata/inso-extpipes-cli/releases
-        uses: cognitedata/inso-expipes-cli@v2.1.0
+        uses: cognitedata/inso-expipes-cli@v2.2.1
         env:
             EXTPIPES_IDP_CLIENT_ID: ${{ secrets.CLIENT_ID }}
             EXTPIPES_IDP_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
@@ -334,12 +353,14 @@ jobs:
 # Contribute
 1. `poetry install`
 2. To run all checks locally - which is typically needed if the GitHub check is failing - e.g. you haven't set up `pre-commit` to run automatically:
-  -  `poetry run pre-commit install`  # Only needed if not installed
-  -  `poetry run pre-commit run --all-files`
-#### Versioning
+  - `poetry install && poetry shell`
+  - `pre-commit install`  # Only needed if not installed
+  - `pre-commit run --all-files`
+
+## Semantic Versioning
 - Uses `semantic-release` to create version tags.
 - The rules for commit messages are conventional commits, see [conventionalcommits](https://www.conventionalcommits.org/en/v1.0.0-beta.4/#summary%3E)
 - Remark: If version needs change, before merge, make sure commit title has elements mentioned on `conventionalcommits`
-- Remark: with new version change, bump will update the version on `pyproject.toml` so no need to change version there.
-- Remark: version in `incubator/extpipes_cli/__init__` is used in main to add version on metadata.
-  This is not a part of semantic release but needs to be updated to upcoming version before version update.
+- Remark: with new version change, bump will automatically update
+  - the version on `pyproject.toml`
+  - the version in `src/extpipes/__init__` (used by `--version` parameter).

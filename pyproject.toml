@@ -1,5 +1,6 @@
 [tool.poetry]
-name = "inso-extpipes-cli"
+# matching the name of the "script" hook, used from Dockerfile
+name = "extpipes-cli"
 version = "2.2.1"
 description = "A CLI to deploy CDF Extraction Pipelines"
 authors = ["Peter Arwanitis <peter.arwanitis@cognite.com>", "Tugce Ozgur Oztetik <tugce.oztetik@cognite.com>"]
@@ -49,6 +50,8 @@ pytest = "^7.2.1"
 # pytest-cov = "^3.0.0"
 
 [tool.poetry.scripts]
+# using a hyphen version and same as [tool.poetry].name
+# check 'packages' definition, which makes 'extpipes' package available
 extpipes-cli = "extpipes.__main__:main"
 
 [build-system]
