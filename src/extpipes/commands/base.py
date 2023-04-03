@@ -37,7 +37,9 @@ class CommandBase:
 
         # Pull the config out of the container
         self.extpipes_config: ExtpipesConfig = self.container.extpipes()
-        logging.debug(f"Features from config.yaml or defaults (can be overridden by cli-parameters!):\n {self.extpipes_config.features}")
+        logging.debug(
+            f"Features from config.yaml or defaults (can be overridden by cli-parameters!):\n {self.extpipes_config.features}"
+        )
 
         self.extpipe_pattern: bool = self.extpipes_config.features.extpipe_pattern
         self.default_contacts: bool = self.extpipes_config.features.default_contacts
@@ -51,16 +53,17 @@ class CommandBase:
         if self.dry_run:
             logging.warning("Starting Dry Run! Only Database tables will be created if configured.")
 
-
     def validate_config(self) -> T_CommandBase:
         """
-            Validates the structure of the config file
-              * Data Sets exist in CDF
-              * RAW Databases exist in CDF
-              * Creates RAW Tables if they don't exist
+        Validates the structure of the config file
+          * Data Sets exist in CDF
+          * RAW Databases exist in CDF
+          * Creates RAW Tables if they don't exist
         """
         # Data Sets
-        requested_data_set_external_ids = list({pipeline.data_set_external_id for pipeline in self.extpipes_config.pipelines})
+        requested_data_set_external_ids = list(
+            {pipeline.data_set_external_id for pipeline in self.extpipes_config.pipelines}
+        )
         logging.debug(f"{requested_data_set_external_ids=}")
 
         try:
@@ -102,7 +105,7 @@ class CommandBase:
                     logging.warning(f"Missing {req_table} table in {req_db} database")
 
                     res = self.client.raw.tables.create(db_name=req_db, name=req_table)
-                    
+
                     logging.info(f"Created {res.name} table in {req_db} database")
 
         # return self for chaining

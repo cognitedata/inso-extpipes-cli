@@ -8,7 +8,14 @@ from .base import CommandBase
 
 
 class CommandDeploy(CommandBase):
-    def __init__(self, config_file, command: CommandMode = CommandMode.DEPLOY, debug: bool = False, automatic_delete: bool = True, dry_run: bool = False):
+    def __init__(
+        self,
+        config_file,
+        command: CommandMode = CommandMode.DEPLOY,
+        debug: bool = False,
+        automatic_delete: bool = True,
+        dry_run: bool = False,
+    ):
         super().__init__(config_file, command=command, debug=debug, dry_run=dry_run)
         self.automatic_delete = automatic_delete
 
@@ -18,8 +25,7 @@ class CommandDeploy(CommandBase):
 
         # get requested from config
         requested_extpipes = {
-            pipeline.external_id:  # key
-            ExtractionPipeline(  # value
+            pipeline.external_id: ExtractionPipeline(  # key  # value
                 external_id=pipeline.external_id,
                 name=pipeline.name,
                 description=pipeline.description,
@@ -28,15 +34,23 @@ class CommandDeploy(CommandBase):
                 schedule=pipeline.schedule,
                 contacts=pipeline.contacts,
                 metadata=pipeline.metadata,
-                created_by=self.client._config.client_name
+                created_by=self.client._config.client_name,
             )
             for pipeline in self.extpipes_config.pipelines
         }
 
         # build 3 lists create/update/update
-        create_extpipes = [extpipe for external_id, extpipe in requested_extpipes.items() if external_id not in existing_extpipes.keys()]
-        update_extpipes = [extpipe for external_id, extpipe in requested_extpipes.items() if external_id in existing_extpipes.keys()]
-        delete_extpipes = [external_id for external_id in existing_extpipes.keys() if external_id not in requested_extpipes.keys()]
+        create_extpipes = [
+            extpipe
+            for external_id, extpipe in requested_extpipes.items()
+            if external_id not in existing_extpipes.keys()
+        ]
+        update_extpipes = [
+            extpipe for external_id, extpipe in requested_extpipes.items() if external_id in existing_extpipes.keys()
+        ]
+        delete_extpipes = [
+            external_id for external_id in existing_extpipes.keys() if external_id not in requested_extpipes.keys()
+        ]
 
         logging.info(f"## Extraction pipelines to create:  {[extpipe.external_id for extpipe in create_extpipes]}")
         logging.info(f"## Extraction pipelines to update:  {[extpipe.external_id for extpipe in update_extpipes]}")

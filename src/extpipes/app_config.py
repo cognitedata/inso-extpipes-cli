@@ -61,6 +61,7 @@ class ExtpipesConfig(Model):
     """
     Configuration parameters for CDF Project Bootstrap, create mode
     """
+
     # here goes the main configuration
     features: Optional[ExtpipesFeatures] = Field(
         default=ExtpipesFeatures(

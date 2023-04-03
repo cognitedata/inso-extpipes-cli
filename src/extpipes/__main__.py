@@ -37,8 +37,6 @@ from .app_config import CommandMode
 from .app_exceptions import ExtpipesConfigError
 from .commands.deploy import CommandDeploy
 
-
-
 # '''
 #           888 d8b          888
 #           888 Y8P          888
@@ -182,7 +180,13 @@ def deploy(obj: Dict, config_file: str, automatic_delete: bool = True) -> None:
     click.echo(click.style("Deploying Extraction Pipelines...", fg="green"))
 
     try:
-        command = CommandDeploy(config_file, command=CommandMode.DEPLOY, debug=obj["debug"], automatic_delete=automatic_delete, dry_run=obj["dry_run"])
+        command = CommandDeploy(
+            config_file,
+            command=CommandMode.DEPLOY,
+            debug=obj["debug"],
+            automatic_delete=automatic_delete,
+            dry_run=obj["dry_run"],
+        )
         command.validate_config()
         command.command()
 
@@ -193,6 +197,7 @@ def deploy(obj: Dict, config_file: str, automatic_delete: bool = True) -> None:
 
 
 extpipes_cli.add_command(deploy)
+
 
 def main() -> None:
     extpipes_cli()
