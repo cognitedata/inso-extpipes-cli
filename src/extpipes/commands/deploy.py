@@ -62,7 +62,7 @@ class CommandDeploy(CommandBase):
                 logging.info(f"## These extraction pipelines are in CDF but not configured:  {delete_extpipes}")
 
         if self.dry_run:
-            logging.warning(f"Dry Run finished!")
+            logging.warning("Dry Run finished!")
 
         else:
             if create_extpipes:

@@ -37,9 +37,7 @@ class CommandBase:
 
         # Pull the config out of the container
         self.extpipes_config: ExtpipesConfig = self.container.extpipes()
-        logging.debug(
-            f"Features from config.yaml or defaults (can be overridden by cli-parameters!):\n {self.extpipes_config.features}"
-        )
+        logging.debug(f"Features from config.yaml or defaults:\n {self.extpipes_config.features}")
 
         self.extpipe_pattern: bool = self.extpipes_config.features.extpipe_pattern
         self.default_contacts: bool = self.extpipes_config.features.default_contacts

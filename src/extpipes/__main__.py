@@ -173,7 +173,7 @@ def extpipes_cli(
 @click.option(
     "--automatic-delete",
     is_flag=True,
-    help="Purge extpipes which are not specified in config-file (The default behavior is to keep the deployment in sync with the configuration)",
+    help="Delete extpipes which are not specified in config-file",
 )
 @click.pass_obj
 def deploy(obj: Dict, config_file: str, automatic_delete: bool = True) -> None:
