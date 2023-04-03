@@ -18,7 +18,7 @@ class ExtpipesConfigError(Exception):
         message -- explanation of the error
     """
 
-    def __init__(self, message: str):
+    def __init__(self, message: str = "Check your configuration file"):
         self.message = message
         super().__init__(self.message)
 

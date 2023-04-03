@@ -31,18 +31,18 @@ bootstrap:
 
 
 cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE_NAME}
-  # host: https://${BOOTSTRAP_CDF_CLUSTER}.cognitedata.com/
-  host: ${BOOTSTRAP_CDF_HOST}
-  project: ${BOOTSTRAP_CDF_PROJECT}
+  # host: https://${CLUSTER}.cognitedata.com/
+  host: ${HOST}
+  project: ${PROJECT}
   #
   # AAD IdP sign-in credentials:
   #
   idp-authentication:
-    client-id: ${BOOTSTRAP_IDP_CLIENT_ID}
-    secret: ${BOOTSTRAP_IDP_CLIENT_SECRET}
+    client-id: ${CLIENT_ID}
+    secret: ${CLIENT_SECRET}
     scopes:
-      - ${BOOTSTRAP_IDP_SCOPES}
-    token-url: ${BOOTSTRAP_IDP_TOKEN_URL}
+      - ${SCOPES}
+    token-url: ${TOKEN_URL}
 
 logger:
   file:

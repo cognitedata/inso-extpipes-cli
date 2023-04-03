@@ -1,17 +1,13 @@
 import logging
-import re
-from datetime import datetime
-from functools import lru_cache, partial
-from typing import Any, Dict, List, Set, Tuple, TypeVar, Union
+from typing import TypeVar
 
-import yaml
 from cognite.client import CogniteClient
 from cognite.client.exceptions import CogniteNotFoundError
 
 from .. import __version__
-from ..app_config import NEWLINE, CommandMode, ExtpipesConfig, YesNoType, supported_resource_types
+from ..app_config import CommandMode, ExtpipesConfig
 from ..app_container import ContainerSelector, init_container
-from ..app_exceptions import ExtpipesValidationError
+from ..app_exceptions import ExtpipesConfigError
 
 # '''
 #  888888b.                     888             888                              .d8888b.
@@ -32,156 +28,82 @@ T_CommandBase = TypeVar("T_CommandBase", bound="CommandBase")
 
 
 class CommandBase:
-    def __init__(self, config_path: str, command: CommandMode, debug: bool):
+    def __init__(self, config_path: str, command: CommandMode, debug: bool, dry_run: bool):
+        logging.info(f"Starting CDF Extraction Pipelines version <v{__version__}> for command: <{command}>")
 
         # validate and load config according to command-mode
         ContainerCls = ContainerSelector[command]
         self.container: ContainerCls = init_container(ContainerCls, config_path)
 
-        self.is_dry_run: bool = False
-        self.client: CogniteClient = None
-        self.cdf_project = None
+        # Pull the config out of the container
+        self.extpipes_config: ExtpipesConfig = self.container.extpipes()
+        logging.debug(f"Features from config.yaml or defaults (can be overridden by cli-parameters!):\n {self.extpipes_config.features}")
 
-        logging.info(f"Starting CDF Bootstrap version <v{__version__}> for command: <{command}>")
+        self.extpipe_pattern: bool = self.extpipes_config.features.extpipe_pattern
+        self.default_contacts: bool = self.extpipes_config.features.default_contacts
 
-        # init command-specific parts
-        # if subclass(ContainerCls, CogniteContainer):
-        if command in (CommandMode.DEPLOY,):
-            #
-            # Cognite initialisation
-            #
-            self.client: CogniteClient = self.container.cognite_client()
-            # TODO: support: token_custom_args
-            # client_name="inso-bootstrap-cli", token_custom_args=self.config.token_custom_args
+        self.client: CogniteClient = self.container.cognite_client()
+        self.cdf_project = self.client.config.project
 
-            self.cdf_project = self.client.config.project
-            logging.info(f"Successful connection to CDF client to project: '{self.cdf_project}'")
+        logging.info(f"Successful connection to CDF client to project: '{self.cdf_project}'")
 
-        # not perfect refactoring yet, to handle the config loading for the different CommandMode-s
-        match command:
-            case CommandMode.DEPLOY:
+        self.dry_run = dry_run
+        if self.dry_run:
+            logging.warning("Starting Dry Run! Only Database tables will be created if configured.")
 
-                # TODO: correct for DIAGRAM and PREPARE?!
-                self.extpipes_config: ExtpipesConfig = self.container.extpipes()
-
-                #
-                # load 'bootstrap.features'
-                #
-                # unpack and process features
-                features = self.extpipes_config.features
-
-                # TODO: not available for 'delete' but there must be a smarter solution
-                logging.debug(
-                    "Features from config.yaml or defaults (can be overridden by cli-parameters!): " f"{features=}"
-                )
-
-                # [OPTIONAL] default: False
-                self.automatic_delete: bool = features.automatic_delete
-                # [OPTIONAL] default: True
-                self.extpipe_pattern: bool = features.extpipe_pattern
-                # [OPTIONAL] default: False
-                self.default_contacts: bool = features.default_contacts
-
-    def dry_run(self, dry_run: YesNoType) -> T_CommandBase:
-        self.is_dry_run = dry_run == YesNoType.yes
-
-        if self.is_dry_run:
-            logging.info("DRY-RUN active: No changes will be made to CDF")
-
-        # return self for command chaining
-        return self
-
-    @lru_cache(maxsize=100)
-    def resolve_external_id(
-        self, resource_type: str, external_id: str, ignore_unknown_ids: bool = False
-    ) -> Union[str, None]:
-
-        logging.debug(f"resolve {resource_type=} {external_id=}")
-
-        assert resource_type in supported_resource_types, f"Not supported resource_type= {resource_type}"
-        resource = getattr(self.client, resource_type).retrieve(external_id=external_id)
-        if resource:
-            return resource.id
-        elif ignore_unknown_ids:
-            return None
-        else:
-            raise CogniteNotFoundError(not_found=[external_id])
-
-    """
-    ### validate config
-    * dataset exists, if not fail
-    * raw db exists, if not fail
-    * raw table exists, if not create
-    """
 
     def validate_config(self) -> T_CommandBase:
-
-        # apply list(set()) to remove duplicates
-        requested_rawdb_tables = list(
-            set(
-                [
-                    (rawdb.rawdb_name, rawtable.rawtable_name)
-                    for rawdb in self.extpipes_config.rawdbs
-                    for rawtable in rawdb.rawtables
-                    # only request raw_table if
-                    # if at least one pipeline is configured with 'skip-rawtable: false'
-                    # all() returns False if at least one element is False
-                    if not all([pipeline.skip_rawtable for pipeline in rawtable.pipelines])
-                ]
-            )
-        )
-
-        requested_data_set_external_ids = list(
-            set([rawdb.dataset_external_id for rawdb in self.extpipes_config.rawdbs])
-        )
-
-        logging.info(f"{requested_rawdb_tables=}")
-        logging.info(f"{requested_data_set_external_ids=}")
-
-        resolved_external_ids = list(
-            filter(partial(self.resolve_external_id, "data_sets"), requested_data_set_external_ids)
-        )
-        assert set(requested_data_set_external_ids) == set(
-            resolved_external_ids
-        ), f"Data Sets missing: {set(requested_data_set_external_ids) - set(resolved_external_ids)}"
-
         """
-        As we need to validate (db, table) tuples by comparing "requested vs existing",
-        in case of a rawdb w/o tables, a dummy entry will be created:
-        ```
-        ('src:007:cargo:rawdb:state', 'n/a'),
-        ```
+            Validates the structure of the config file
+              * Data Sets exist in CDF
+              * RAW Databases exist in CDF
+              * Creates RAW Tables if they don't exist
         """
-        # get existing dbs/tables
-        existing_db_tables = [
-            (db.name, (table.name if table is not None else "n/a"))
-            for db in self.client.raw.databases.list(limit=None)
-            # loop through a dummy None table, in case of empty
-            for table in (self.client.raw.tables.list(db_name=db.name, limit=None) or [None])
-        ]
+        # Data Sets
+        requested_data_set_external_ids = list({pipeline.data_set_external_id for pipeline in self.extpipes_config.pipelines})
+        logging.debug(f"{requested_data_set_external_ids=}")
 
-        # missing dbs are a failure in our dataops approach, as all must be precreated
-        assert set([r[0] for r in requested_rawdb_tables]).issubset(
-            set([r[0] for r in existing_db_tables])
-        ), f"RAW DBs missing: {set([r[0] for r in requested_rawdb_tables]) - set([r[0] for r in existing_db_tables])}"
-        logging.info("All RAW DBs exist")
-        # missing dbs exist
-        # missing_raw_dbs = list(set([r[0] for r in requested_rawdb_tables]) - set([r[0] for r in existing_db_tables]))
+        try:
+            # will throw exception if one or more of the data sets don't exist
+            self.client.data_sets.retrieve_multiple(external_ids=requested_data_set_external_ids)
+        except CogniteNotFoundError as e:
+            if e.not_found:
+                msg = f"Missing Data Sets: {e.not_found}"
+            else:
+                msg = e
+            logging.error(msg)
+            raise ExtpipesConfigError(msg)
 
-        # missing tables can be created, so no assert
-        # assert set(requested_rawdb_tables).issubset(set(existing_db_tables)),
-        #   f'RAW Tables missing: {set(requested_rawdb_tables) - set(existing_db_tables)}'
+        # RAW
+        # build dictionary of configured dbs:tables
+        requested_raw_tables = {}
+        for pipeline in self.extpipes_config.pipelines:
+            for raw_table in pipeline.raw_tables:
+                if raw_table.db_name in requested_raw_tables:
+                    requested_raw_tables[raw_table.db_name].append(raw_table.table_name)
+                else:
+                    requested_raw_tables[raw_table.db_name] = [raw_table.table_name]
 
-        # validate tables exist
-        missing_raw_tables = list(set(requested_rawdb_tables) - set(existing_db_tables))
-        logging.info(f"missing_raw_tables= {missing_raw_tables}")
+        # get existing dbs/tables into a dict for fast lookup
+        cdf_dbs = {db.name: [] for db in self.client.raw.databases.list(limit=None)}
+        for db_name in cdf_dbs:
+            # Calling .tables() on a Database object does this same thing anyways
+            for table in self.client.raw.tables.list(db_name=db_name, limit=None):
+                cdf_dbs[db_name].append(table.name)
 
-        created_tables = [
-            self.client.raw.tables.create(db_name=db_name, name=table_name)
-            for db_name, table_name in missing_raw_tables
-        ]
-        if len(created_tables):
-            logging.info(f"{len(created_tables)} missing RAW tables created")
+        # check if all requested dbs and tables exist
+        for req_db, req_tables in requested_raw_tables.items():
+            if req_db not in cdf_dbs:
+                logging.error(f"Missing '{req_db}' database")
+                raise ExtpipesConfigError
+
+            for req_table in req_tables:
+                if req_table not in cdf_dbs[req_db]:
+                    logging.warning(f"Missing {req_table} table in {req_db} database")
+
+                    res = self.client.raw.tables.create(db_name=req_db, name=req_table)
+                    
+                    logging.info(f"Created {res.name} table in {req_db} database")
 
         # return self for chaining
         return self

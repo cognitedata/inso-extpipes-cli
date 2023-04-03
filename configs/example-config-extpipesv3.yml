@@ -5,7 +5,7 @@ extpipes:
     # description: string [ 1 .. 500 ] characters
 
     # extpipe-pattern only documentation atm
-    extpipe-pattern: '{source}:{short-name}:{rawtable-name}:{suffix}'
+    extpipe-pattern: '{source}:{short-name}:{table-name}:{suffix}'
 
     # new since v2.1.0
     # The default and recommended value is: true
@@ -29,13 +29,13 @@ extpipes:
       # parameter names from API v1 with "CamelCase" transformed to lowercase "hyphen-case"
       # TODO: just duplicate all of this just because it has a different schedule and extId?
       # maybe use yaml anchors / alias feature to minimize duplication
-    - external-id: az-func:src:002:sap_funcloc:hourly
+    - external-id: src:001:sap:sap_funcloc:continuous
       # optional, default to external-id
-      name: az-func:src:001:sap:hourly
+      name: src:001:sap:sap_funcloc:continuous
       # optional
       description: describe or defaults to auto-generated description, that it is "deployed through extpipes-cli@v3.0.0"
       # optional, for deployments w/o full scoping?
-      dataset-external-id: src:001:sap
+      data-set-external-id: src:001:sap
       # optional: string or null^(On trigger|Continuous)|(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|s|m|h))+)|((((\d+,)+\d+|(\d+([/\-])\d+)|\d+|\*(/\d+)?) ?){5,7})$
       # "On trigger", "Continuous" or cron expression
       schedule: Continuous
@@ -50,65 +50,52 @@ extpipes:
       source: az-func
       # optional {}
       metadata:
-          version: extpipes-cli@v3.0.1
+        version: extpipes-cli@v3.1.0
       # optional max 10000 char
       # Documentation text field, supports Markdown for text formatting.
       # TODO: simple option to link to another file in yaml? 10k can be quite long?!
       documentation: Documentation which can include Mermaid diagrams?
-      # optional
-      # Time in minutes to pass without any Run. Null if extraction pipeline is not checked.
-      notification-config:
-        # NOTE: what is that for a parameter name?!
-        allowed-not-seen-range-in-minutes: 30
       # optional
       # Usually user email is expected here, defaults to extpipes + version?
       created-by: extpipes-cli@v3.1.0
 
       # optional [{},{}]
       raw-tables:
-        - db-name: src:001:sap:rawdb
+        - db-name: src:001:sap
           table-name: sap_funcloc
 
       # optional {}
       # exactly one
       # https://docs.cognite.com/api/v1/#tag/Extraction-Pipelines-Config/operation/createExtPipeConfig
       extpipe-config:
-          # optional
-          # TODO: which length limit?
-          description: describe the config, or autogenerate?
-          # TODO: officially optional, but in extpipes it should be mandatory
-          # TODO: length limit?
-          # not incl. the config here, but check and load it from a relative folder path, and embed it as string
-          # config-file: extpipes-config/sap001config.yaml
-          # str
-          # TODO: only push it to CDF if changed since last time, otherwise it will create a new revision
-          config: |
-            nested yaml/json/ini which is simply a string for this config
+        # str
+        # TODO: only push it to CDF if changed since last time, otherwise it will create a new revision
+        config: |
+          nested yaml/json/ini which is simply a string for this config
+        # optional
+        # TODO: which length limit?
+        description: describe the config, or autogenerate?
+        # TODO: officially optional, but in extpipes it should be mandatory
+        # TODO: length limit?
 
 
 # follows the same parameter structure as the DB extractor configuration
 cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
-  # host: https://${EXTPIPES_CDF_CLUSTER}.cognitedata.com/
-  host: ${EXTPIPES_CDF_HOST}
-  project: ${EXTPIPES_CDF_PROJECT}
-  #
-  # AAD IdP login credentials:
-  #
+  host: ${HOST}
+  project: ${PROJECT}
   idp-authentication:
-    client-id: ${EXTPIPES_IDP_CLIENT_ID}
-    secret: ${EXTPIPES_IDP_CLIENT_SECRET}
+    client-id: ${CLIENT_ID}
+    secret: ${CLIENT_SECRET}
     scopes:
-      - ${EXTPIPES_IDP_SCOPES}
-    token_url: ${EXTPIPES_IDP_TOKEN_URL}
+      - ${SCOPES}
+    token_url: ${TOKEN_URL}
 
 # https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
 # https://docs.python.org/3/howto/logging-cookbook.html
-# standard Python logging-dict
 logging:
   version: 1
   formatters:
     formatter:
-      # class: "tools.formatter.StackdriverJsonFormatter"
       format: "[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s"
   handlers:
     file:
@@ -123,9 +110,9 @@ logging:
       formatter: "formatter"
       stream: "ext://sys.stderr"
   root:
-    level: "DEBUG"
+    level: "INFO"
     handlers: [ "console", "file" ]
   loggers:
     cognite-sdk:
-      level: "DEBUG"
+      level: "INFO"
       handlers: [ "console"]

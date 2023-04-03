@@ -1,39 +1,16 @@
 from enum import Enum
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from cognite.client.data_classes import Asset, DataSet, Event, Label, Sequence, TimeSeries
 from pydantic import Field
 
 from .common.base_model import Model
 
-# because within f'' strings no backslash-character is allowed
-NEWLINE = "\n"
-
-
-# mixin 'str' to 'Enum' to support comparison to string-values
-# https://docs.python.org/3/library/enum.html#others
-# https://stackoverflow.com/a/63028809/1104502
-class YesNoType(str, Enum):
-    yes = "yes"
-    no = "no"
-
 
 class CommandMode(str, Enum):
     DEPLOY = "deploy"
     # DELETE = "delete"
     # DIAGRAM = "diagram"
-
-
-# generic resolve_external_id approach
-supported_resource_types = {
-    "time_series": TimeSeries,
-    "data_sets": DataSet,
-    "events": Event,
-    "sequences": Sequence,
-    "assets": Asset,
-    "labels": Label,
-    "files": None,  # no data_class available for create(...)
-}
 
 
 class ScheduleType(str, Enum):
@@ -45,31 +22,27 @@ class Contact(Model):
     name: Optional[str]
     email: Optional[str]
     role: Optional[str]
-    send_notification: Optional[bool]
+    sendNotification: Optional[bool]  # cognite-sdk doesn't use snake-case for this param
+
+
+class RawTable(Model):
+    db_name: str
+    table_name: str
 
 
 class Pipeline(Model):
-    # mandatory
-    schedule: ScheduleType | str
-    # az-func, adf, db, pi, ...
-    source: Optional[str]
-    suffix: Optional[str]
-    # None/On trigger/Continuous/cron regex
+    external_id: str
+    name: str
+    description: Optional[str]
+    data_set_external_id: str
+    schedule: Optional[ScheduleType | str]
     contacts: Optional[List[Contact]] = Field(default_factory=list)
-    skip_rawtable: Optional[bool] = False
-
-
-class Rawtable(Model):
-    rawtable_name: str
-    short_name: Optional[str]
-    pipelines: List[Pipeline]
-
-
-class Rawdb(Model):
-    rawdb_name: str
-    dataset_external_id: str
-    short_name: Optional[str]
-    rawtables: List[Rawtable]
+    source: Optional[str]
+    metadata: Optional[Dict[str, str]]
+    documentation: Optional[str]
+    created_by: Optional[str]
+    raw_tables: Optional[List[RawTable]]
+    extpipe_config: Optional[Dict[str, str]]
 
 
 class ExtpipesFeatures(Model):
@@ -88,7 +61,6 @@ class ExtpipesConfig(Model):
     """
     Configuration parameters for CDF Project Bootstrap, create mode
     """
-
     # here goes the main configuration
     features: Optional[ExtpipesFeatures] = Field(
         default=ExtpipesFeatures(
@@ -100,4 +72,4 @@ class ExtpipesConfig(Model):
         )
     )
 
-    rawdbs: List[Rawdb]
+    pipelines: List[Pipeline]
