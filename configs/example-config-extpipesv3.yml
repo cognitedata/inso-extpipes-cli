@@ -5,7 +5,7 @@ extpipes:
     # description: string [ 1 .. 500 ] characters
 
     # extpipe-pattern only documentation atm
-    extpipe-pattern: '{source}:{short-name}:{table-name}:{suffix}'
+    naming-pattern: '{source}:{short-name}:{table-name}:{suffix}'
 
     # new since v2.1.0
     # The default and recommended value is: true
