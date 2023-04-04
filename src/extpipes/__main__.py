@@ -54,7 +54,7 @@ from .commands.deploy import CommandDeploy
 @click.option(
     "--cdf-project-name",
     help="CDF Project to interact with the CDF API, the 'PROJECT',"
-    "environment variable can be used instead. Required for OAuth2 and optional for api-keys.",
+    "environment variable can be used instead. Required for OAuth2.",
     envvar="PROJECT",
 )
 # TODO: is cluster and alternative for host?
@@ -73,13 +73,6 @@ from .commands.deploy import CommandDeploy
     "Provide this or make sure to set the 'HOST' environment variable."
     "Default: https://westeurope-1.cognitedata.com/",
     envvar="HOST",
-)
-# TODO: can we deprecate API_KEY option?
-@click.option(
-    "--api-key",
-    help="API key to interact with the CDF API. Provide this or make sure to set the 'API_KEY',"
-    "environment variable if you want to authenticate with API keys.",
-    envvar="API_KEY",
 )
 @click.option(
     "--client-id",
@@ -133,7 +126,6 @@ def extpipes_cli(
     cluster: str = "westeurope-1",
     cdf_project_name: Optional[str] = None,
     host: str = None,
-    api_key: Optional[str] = None,
     # cdf idp
     client_id: Optional[str] = None,
     client_secret: Optional[str] = None,
@@ -151,7 +143,6 @@ def extpipes_cli(
         "cluster": cluster,
         "cdf_project_name": cdf_project_name,
         "host": host,
-        "api_key": api_key,
         # cdf idp
         "client_id": client_id,
         "client_secret": client_secret,
