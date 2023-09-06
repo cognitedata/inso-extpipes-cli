@@ -113,16 +113,10 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
 
-      - id: parse_version
-        name: "Parse version from ref"
-        run: | # Returns the last component of the ref path, e.g. 'refs/tags/release/1.2.3-beta' -> '1.2.3-beta'
-          $version = split-path -leaf $env:GITHUB_REF_NAME
-          echo "version=$version" >> $env:GITHUB_OUTPUT
-
       - name: "Build and push Docker image for Azure Pipelines"
         uses: docker/build-push-action@v2
         with:
           context: .
           push: true
           file: ./Dockerfile-azure-pipelines
-          tags: cognite/extpipes-cli:${{ steps.parse_version.outputs.version }}-azure
+          tags: cognite/extpipes-cli:${{ steps.version.outputs.TAG_NAME }}-azure
