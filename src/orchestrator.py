@@ -1,18 +1,13 @@
 import logging
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import (
-    ExtractionPipelineConfig,
-    ExtractionPipelineUpdate,
-)
+from cognite.client.data_classes import ExtractionPipelineConfig, ExtractionPipelineUpdate
 
 from configs import ExtPipesConfig, ExtPipesUpdateAttributes
 
 
 def upsert_extraction_pipelines(client: CogniteClient, eps_config: ExtPipesConfig):
-    existing_eps = set(
-        [ep.external_id for ep in client.extraction_pipelines.list(limit=None)]
-    )
+    existing_eps = set([ep.external_id for ep in client.extraction_pipelines.list(limit=None)])
 
     new_eps = [ep for ep in eps_config.pipelines if ep.external_id not in existing_eps]
     update_eps = [ep for ep in eps_config.pipelines if ep.external_id in existing_eps]
@@ -22,9 +17,7 @@ def upsert_extraction_pipelines(client: CogniteClient, eps_config: ExtPipesConfi
         for ep in new_eps:
             logging.debug(f"Create new extraction pipeline '{ep.external_id}'")
             # TODO: Consider solving this another way. Configuration is not a parameter, so it must be removed
-            client.extraction_pipelines.create(
-                [ep.model_dump(by_alias=True, exclude="configuration")]
-            )
+            client.extraction_pipelines.create([ep.model_dump(by_alias=True, exclude="configuration")])
             upsert_extraction_pipeline_config(client=client, eps=[ep])
         logging.debug("Completed creating new extraction pipelines")
 
@@ -65,7 +58,5 @@ def upsert_extraction_pipeline_config(client: CogniteClient, eps: list[ExtPipesC
     eps_with_config = [ep for ep in eps if ep.configuration]
     for ep in eps_with_config:
         client.extraction_pipelines.config.create(
-            ExtractionPipelineConfig(
-                external_id=ep.external_id, config=ep.configuration
-            )
+            ExtractionPipelineConfig(external_id=ep.external_id, config=ep.configuration)
         )

@@ -37,9 +37,7 @@ def create_oidc_client(
 
 
 def create_oidc_client_from_dict(dct) -> CogniteClient:
-    return create_oidc_client(
-        **{k: dct[k] for k in signature(create_oidc_client).parameters}
-    )
+    return create_oidc_client(**{k: dct[k] for k in signature(create_oidc_client).parameters})
 
 
 def setup_logging(run_debug_mode: bool = False):
@@ -47,11 +45,7 @@ def setup_logging(run_debug_mode: bool = False):
         logging.config.dictConfig(
             {
                 "version": 1,
-                "formatters": {
-                    "formatter": {
-                        "format": "[%(asctime)s] [%(levelname)s] : %(message)s"
-                    }
-                },
+                "formatters": {"formatter": {"format": "[%(asctime)s] [%(levelname)s] : %(message)s"}},
                 "handlers": {
                     "console": {
                         "class": "logging.StreamHandler",
@@ -67,11 +61,7 @@ def setup_logging(run_debug_mode: bool = False):
         logging.config.dictConfig(
             {
                 "version": 1,
-                "formatters": {
-                    "formatter": {
-                        "format": "[%(asctime)s] [%(levelname)s] : %(message)s"
-                    }
-                },
+                "formatters": {"formatter": {"format": "[%(asctime)s] [%(levelname)s] : %(message)s"}},
                 "handlers": {
                     "console": {
                         "class": "logging.StreamHandler",

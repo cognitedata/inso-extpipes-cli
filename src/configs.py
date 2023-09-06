@@ -31,13 +31,7 @@ class ActionModel(BaseModel):
             return getenv(f"{prefix}{key.upper()}", "").strip() or None
 
         expected_params = cls.model_json_schema()["properties"]
-        return cls.model_validate(
-            {
-                k: v
-                for k, v in zip(expected_params, map(get_parameter, expected_params))
-                if v
-            }
-        )
+        return cls.model_validate({k: v for k, v in zip(expected_params, map(get_parameter, expected_params)) if v})
 
 
 class DeployCredentials(ActionModel, CredentialsModel):
@@ -66,9 +60,7 @@ class ExtPipeContact(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
     role: Optional[str] = None
-    send_notification: Optional[bool] = Field(
-        default=False, alias="sendNotification"
-    )  # TODO: Can this be none
+    send_notification: Optional[bool] = Field(default=False, alias="sendNotification")  # TODO: Can this be none
 
     @classmethod
     def to_dict(cls, obj: "ExtPipeContact"):
@@ -103,9 +95,7 @@ class ExtPipeConfig(BaseModel):
         elif CronSlices.is_valid(value):
             return value
         else:
-            raise ValueError(
-                f"Received an invalid schedule: '{value}'. Notice that the values are case sensitive"
-            )
+            raise ValueError(f"Received an invalid schedule: '{value}'. Notice that the values are case sensitive")
 
     @validator("raw_tables")
     def validate_raw_tables(cls, raw_tables):
@@ -133,9 +123,7 @@ class ExtPipeConfig(BaseModel):
 
     def to_extraction_pipeline_config(self) -> ExtractionPipelineConfig:
         # TODO: include description and potentially revision
-        return ExtractionPipelineConfig(
-            external_id=self.external_id, config=self.configuration
-        )
+        return ExtractionPipelineConfig(external_id=self.external_id, config=self.configuration)
 
 
 class ExtPipesConfig(BaseModel):
