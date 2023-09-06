@@ -125,4 +125,4 @@ jobs:
           context: .
           push: true
           file: ./Dockerfile-azure-pipelines
-          tags: cognite/extpipes-action:${{ steps.parse_version.outputs.version }}-azure
+          tags: cognite/extpipes-cli:${{ steps.parse_version.outputs.version }}-azure
