@@ -1,6 +1,5 @@
 FROM python:3.11-slim AS builder
 
-ADD src /app
 WORKDIR /
 
 RUN pip3 install poetry
