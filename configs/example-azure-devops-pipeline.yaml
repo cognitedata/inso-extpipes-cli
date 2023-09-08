@@ -1,0 +1,30 @@
+# Example of Azure DevOps pipeline configuration file
+parameters:
+- name: RUN_DEBUG_MODE
+  displayName: Run Debug Mode
+  type: boolean
+  default: True
+  values:
+    - True
+    - False
+
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+container:
+  image: cognite/extpipes-cli:1.0.0-azure
+
+steps:
+  - script: python /app/index.py
+    displayName: Deploy Extraction Pipelines to CDF
+    env:
+        DEPLOYMENT_TENANT_ID: $(TENANT_ID)
+        DEPLOYMENT_CLIENT_ID: $(CLIENT_ID)
+        DEPLOYMENT_CLIENT_SECRET: $(CLIENT_SECRET)
+        CDF_PROJECT: $(CDF_PROJECT)
+        CDF_CLUSTER: $(CDF_CLUSTER)
+        CONFIG_FILE_PATH: $(EXTPIPES_ACTION_CONFIG_FILE_PATH)
+        RUN_DEBUG_MODE: ${{ parameters.RUN_DEBUG_MODE }}
