@@ -1,7 +1,14 @@
 from enum import Enum
 from typing import Dict, List, Optional
 
-from cognite.client.data_classes import Asset, DataSet, Event, Label, Sequence, TimeSeries
+from cognite.client.data_classes import (
+    Asset,
+    DataSet,
+    Event,
+    Label,
+    Sequence,
+    TimeSeries,
+)
 from pydantic import Field
 
 from .common.base_model import Model
