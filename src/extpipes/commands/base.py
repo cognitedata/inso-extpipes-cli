@@ -1,5 +1,5 @@
 import logging
-from typing import TypeVar
+from typing import Self, TypeVar
 
 from cognite.client import CogniteClient
 from cognite.client.exceptions import CogniteNotFoundError
@@ -7,24 +7,7 @@ from cognite.client.exceptions import CogniteNotFoundError
 from .. import __version__
 from ..app_config import CommandMode, ExtpipesConfig
 from ..app_container import ContainerSelector, init_container
-from ..app_exceptions import ExtpipesConfigError
-
-# '''
-#  888888b.                     888             888                              .d8888b.
-#  888  "88b                    888             888                             d88P  Y88b
-#  888  .88P                    888             888                             888    888
-#  8888888K.   .d88b.   .d88b.  888888 .d8888b  888888 888d888 8888b.  88888b.  888         .d88b.  888d888 .d88b.
-#  888  "Y88b d88""88b d88""88b 888    88K      888    888P"      "88b 888 "88b 888        d88""88b 888P"  d8P  Y8b
-#  888    888 888  888 888  888 888    "Y8888b. 888    888    .d888888 888  888 888    888 888  888 888    88888888
-#  888   d88P Y88..88P Y88..88P Y88b.       X88 Y88b.  888    888  888 888 d88P Y88b  d88P Y88..88P 888    Y8b.
-#  8888888P"   "Y88P"   "Y88P"   "Y888  88888P'  "Y888 888    "Y888888 88888P"   "Y8888P"   "Y88P"  888     "Y8888
-#                                                                      888
-#                                                                      888
-#                                                                      888
-# '''
-
-# type-hint for BootstrapCommandBase instance response
-T_CommandBase = TypeVar("T_CommandBase", bound="CommandBase")
+from ..app_exceptions import ExtpipesConfigError, ExtpipesValidationError
 
 
 class CommandBase:
@@ -33,14 +16,19 @@ class CommandBase:
 
         # validate and load config according to command-mode
         ContainerCls = ContainerSelector[command]
-        self.container: ContainerCls = init_container(ContainerCls, config_path)
+        self.container = init_container(ContainerCls, config_path)
 
         # Pull the config out of the container
         self.extpipes_config: ExtpipesConfig = self.container.extpipes()
         logging.debug(f"Features from config.yaml or defaults:\n {self.extpipes_config.features}")
 
-        self.extpipe_pattern: bool = self.extpipes_config.features.extpipe_pattern
-        self.default_contacts: bool = self.extpipes_config.features.default_contacts
+        # 'features' defaults are set in the model
+        assert self.extpipes_config.features
+        assert self.extpipes_config.features.extpipe_pattern
+        assert self.extpipes_config.features.default_contacts
+
+        self.extpipe_pattern = self.extpipes_config.features.extpipe_pattern
+        self.default_contacts = self.extpipes_config.features.default_contacts
 
         self.client: CogniteClient = self.container.cognite_client()
         self.cdf_project = self.client.config.project
@@ -51,7 +39,7 @@ class CommandBase:
         if self.dry_run:
             logging.warning("Starting Dry Run! Only Database tables will be created if configured.")
 
-    def validate_config(self) -> T_CommandBase:
+    def validate_config(self) -> Self:
         """
         Validates the structure of the config file
           * Data Sets exist in CDF

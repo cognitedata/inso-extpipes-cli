@@ -1,26 +1,18 @@
-from enum import Enum
-from typing import Dict, List, Optional
+from enum import ReprEnum  # new in 3.11
+from typing import Optional
 
-from cognite.client.data_classes import (
-    Asset,
-    DataSet,
-    Event,
-    Label,
-    Sequence,
-    TimeSeries,
-)
 from pydantic import Field
 
 from .common.base_model import Model
 
 
-class CommandMode(str, Enum):
+class CommandMode(str, ReprEnum):
     DEPLOY = "deploy"
     # DELETE = "delete"
     # DIAGRAM = "diagram"
 
 
-class ScheduleType(str, Enum):
+class ScheduleType(str, ReprEnum):
     continuous = "Continuous"
     on_trigger = "On trigger"
 
@@ -43,13 +35,13 @@ class Pipeline(Model):
     description: Optional[str]
     data_set_external_id: str
     schedule: Optional[ScheduleType | str]
-    contacts: Optional[List[Contact]] = Field(default_factory=list)
+    contacts: Optional[list[Contact]] = Field(default_factory=list)
     source: Optional[str]
-    metadata: Optional[Dict[str, str]]
+    metadata: Optional[dict[str, str]]
     documentation: Optional[str]
     created_by: Optional[str]
-    raw_tables: Optional[List[RawTable]]
-    extpipe_config: Optional[Dict[str, str]]
+    raw_tables: Optional[list[RawTable]]
+    extpipe_config: Optional[dict[str, str]]
 
 
 class ExtpipesFeatures(Model):
@@ -61,7 +53,7 @@ class ExtpipesFeatures(Model):
     automatic_delete: Optional[bool]
 
     # with default values must come last
-    default_contacts: Optional[List[Contact]]
+    default_contacts: Optional[list[Contact]]
 
 
 class ExtpipesConfig(Model):
@@ -72,12 +64,10 @@ class ExtpipesConfig(Model):
     # here goes the main configuration
     features: Optional[ExtpipesFeatures] = Field(
         default=ExtpipesFeatures(
-            **dict(
-                extpipe_pattern="{source}:{rawdb-name}:{rawtable-name}:{suffix}",
-                automatic_delete=False,
-                default_contacts=[],
-            )
+            extpipe_pattern="{source}:{rawdb-name}:{rawtable-name}:{suffix}",
+            automatic_delete=False,
+            default_contacts=[],
         )
     )
 
-    pipelines: List[Pipeline]
+    pipelines: list[Pipeline]

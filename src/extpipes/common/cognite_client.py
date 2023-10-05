@@ -1,9 +1,9 @@
 import logging.config
-from typing import List, Optional
+from typing import Optional
 
+# TODO: PEP 484 Stub Files issue?
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import OAuthClientCredentials
-from pydantic import validator
 
 from ..common.base_model import Model
 
@@ -13,8 +13,8 @@ class CogniteIdpConfig(Model):
     client_name: Optional[str]
     client_id: str
     secret: str
-    scopes: List[str]
-    token_url: Optional[str]
+    scopes: list[str]
+    token_url: str
 
 
 class CogniteConfig(Model):
@@ -23,9 +23,9 @@ class CogniteConfig(Model):
     idp_authentication: CogniteIdpConfig
 
     # compatibility properties to keep get_cognite_client() in sync with other solutions
-    # which are using flat-fields, no nesting and a bit different names
+    # which are using flat-property list, no nesting and a bit different names
     @property
-    def base_url(self) -> List[str]:
+    def base_url(self) -> str:
         return self.host
 
     @property
@@ -33,19 +33,19 @@ class CogniteConfig(Model):
         return self.idp_authentication.token_url
 
     @property
-    def scopes(self) -> List[str]:
+    def scopes(self) -> list[str]:
         return self.idp_authentication.scopes
 
     @property
-    def client_name(self) -> List[str]:
-        return self.idp_authentication.client_name
+    def client_name(self) -> str:
+        return self.idp_authentication.client_name or "bootstrap-client"
 
     @property
-    def client_id(self) -> List[str]:
+    def client_id(self) -> str:
         return self.idp_authentication.client_id
 
     @property
-    def client_secret(self) -> List[str]:
+    def client_secret(self) -> str:
         return self.idp_authentication.secret
 
 
@@ -81,7 +81,6 @@ def get_cognite_client(cognite_config: CogniteConfig) -> CogniteClient:
         CogniteClient: The authenticated CogniteClient
     """
     try:
-
         logging.debug("Attempt to create CogniteClient")
 
         credentials = OAuthClientCredentials(
@@ -90,10 +89,9 @@ def get_cognite_client(cognite_config: CogniteConfig) -> CogniteClient:
             client_secret=cognite_config.client_secret,
             scopes=cognite_config.scopes,
         )
-        default_client_name = "developer_client"
 
         cnf = ClientConfig(
-            client_name=cognite_config.client_name or default_client_name,
+            client_name=cognite_config.client_name,
             base_url=cognite_config.base_url,
             project=cognite_config.project,
             credentials=credentials,

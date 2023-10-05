@@ -8,16 +8,16 @@ from .base import CommandBase
 
 
 class CommandDeploy(CommandBase):
-    def __init__(
-        self,
-        config_file,
-        command: CommandMode = CommandMode.DEPLOY,
-        debug: bool = False,
-        automatic_delete: bool = True,
-        dry_run: bool = False,
-    ):
-        super().__init__(config_file, command=command, debug=debug, dry_run=dry_run)
-        self.automatic_delete = automatic_delete
+    # def __init__(
+    #     self,
+    #     config_file,
+    #     command: CommandMode = CommandMode.DEPLOY,
+    #     debug: bool = False,
+    #     automatic_delete: bool = True,
+    #     dry_run: bool = False,
+    # ):
+    #     super().__init__(config_file, command=command, debug=debug, dry_run=dry_run)
+    #     self.automatic_delete = automatic_delete
 
     def command(self) -> None:
         # get existing extpipes

@@ -1,7 +1,7 @@
 [tool.poetry]
 # matching the name of the "script" hook, used from Dockerfile
 name = "extpipes-cli"
-version = "2.2.1"
+version = "3.0.1"
 description = "A CLI to deploy CDF Extraction Pipelines"
 authors = ["Peter Arwanitis <peter.arwanitis@cognite.com>", "Tugce Ozgur Oztetik <tugce.oztetik@cognite.com>"]
 license = "Apache-2.0"
