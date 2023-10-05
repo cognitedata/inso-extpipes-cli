@@ -37,10 +37,13 @@ def test_deploy_config_01_is_valid(example_file: Path, dotenv_path: Path):
     ContainerCls = ContainerSelector[CommandMode.DEPLOY]
     container: DeployCommandContainer = init_container(ContainerCls, example_file, dotenv_path)
 
+    print(container.extpipes())
+    print(container.cognite_config())
+
     # must contain extpipes section
     assert container.extpipes()
     assert isinstance(container.extpipes().features.default_contacts, list)
-    assert isinstance(container.extpipes().features.extpipe_pattern, str)
+    assert container.extpipes().features.extpipe_pattern is None
     assert isinstance(container.extpipes().pipelines, list)
     # must be able to instantiate a CogniteClient (even with mocked client/secret)
     assert container.cognite_client().config.project

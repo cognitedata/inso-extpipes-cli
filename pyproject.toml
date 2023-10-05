@@ -35,6 +35,17 @@ include = '\.py$'
 [tool.isort]
 profile = "black"
 
+[tool.pytest.ini_options]
+filterwarnings = [
+  "ignore::DeprecationWarning:pkg_resources",  # TODO check again with dynaconf>=3.2.0 (introduced in setuptools==67.5.0)
+]
+# addopts = "--doctest-modules"
+# markers = [
+#     "full: Requiers all optional dependencies to run.",
+# ]
+pythonpath = ["src"]
+testpaths = ["tests"] # , "src/extpipes"
+
 [tool.poetry.scripts]
 # using a hyphen version and same as [tool.poetry].name
 # check 'packages' definition, which makes 'extpipes' package available
@@ -44,10 +55,11 @@ extpipes-cli = "extpipes.__main__:main"
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
 
-[tool.semantic_release]
-version_toml = [
-"pyproject.toml:tool.poetry.version"
-]
+# 231005 pa: deact semver
+# [tool.semantic_release]
+# version_toml = [
+# "pyproject.toml:tool.poetry.version"
+# ]
 version_variable = [
     "src/extpipes/__init__.py:__version__",
 ]
