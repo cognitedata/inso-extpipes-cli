@@ -30,7 +30,7 @@ class CommandDeploy(CommandBase):
                 name=pipeline.name,
                 description=pipeline.description,
                 data_set_id=self.client.data_sets.retrieve(external_id=pipeline.data_set_external_id).id,
-                raw_tables=None,
+                raw_tables=None,  # TODO: ?
                 schedule=pipeline.schedule,
                 contacts=pipeline.contacts,
                 metadata=pipeline.metadata,
@@ -38,6 +38,8 @@ class CommandDeploy(CommandBase):
             )
             for pipeline in self.extpipes_config.pipelines
         }
+
+        # TODO: latest v6 SDK might support UPSERT (with ExtractionPipelineApply)
 
         # build 3 lists create/update/update
         create_extpipes = [

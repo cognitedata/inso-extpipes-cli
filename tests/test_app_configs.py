@@ -20,6 +20,11 @@ def generate_deploy_config_01_is_valid_test_data():
         ROOT_DIRECTORY / "example/.env_mock",
         id=config.name,
     )
+    yield pytest.param(
+        config := ROOT_DIRECTORY / "example/config-deploy-example-01.1.yml",
+        ROOT_DIRECTORY / "example/.env_mock",
+        id=config.name,
+    )
     # add more configs to for testing
     # yield pytest.param(
     #     config := ROOT_DIRECTORY / "example/config-deploy-example-01.1.yml",

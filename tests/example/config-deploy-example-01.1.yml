@@ -4,15 +4,11 @@ extpipes:
     #  externalId: string [ 1 .. 255 ] characters
     # description: string [ 1 .. 500 ] characters
 
-    # extpipe-pattern only documentation atm
-    naming-pattern: "{source}:{short-name}:{table-name}:{suffix}"
-
     # new since v2.1.0
-    # changeds default to false in v3
-    # The default and recommended value is: false
+    # The default and recommended value is: true
     # to keep the deployment in sync with configuration
-    # which means non configured extpipes can get automatically deleted
-    automatic-delete: false
+    # which means non configured extpipes get automatically deleted
+    automatic-delete: true
 
     # can contain multiple contacts, can be overwritten on pipeline level
     default-contacts:
@@ -47,37 +43,22 @@ extpipes:
           email: fizzbuzz@cognite.com
           role: admin
           send-notification: true
-      # optional
-      source: az-func
       # optional {}
       metadata:
-        version: extpipes-cli@v3.1.0
+        # TODO: should be automatically created?
+        version: extpipes-cli@v3.0.1
       # optional max 10000 char
       # Documentation text field, supports Markdown for text formatting.
       # TODO: simple option to link to another file in yaml? 10k can be quite long?!
       documentation: Documentation which can include Mermaid diagrams?
       # optional
-      # Usually user email is expected here, defaults to extpipes + version?
-      created-by: extpipes-cli@v3.1.0
+      # TODO: should be automatically created?
+      created-by: extpipes-cli@v3.0.1
 
       # optional [{},{}]
       raw-tables:
         - db-name: src:001:sap
           table-name: sap_funcloc
-
-      # optional {}
-      # exactly one
-      # https://docs.cognite.com/api/v1/#tag/Extraction-Pipelines-Config/operation/createExtPipeConfig
-      extpipe-config:
-        # str
-        # TODO: only push it to CDF if changed since last time, otherwise it will create a new revision
-        config: |
-          nested yaml/json/ini which is simply a string for this config
-        # optional
-        # TODO: which length limit?
-        description: describe the config, or autogenerate?
-        # TODO: officially optional, but in extpipes it should be mandatory
-        # TODO: length limit?
 
 # follows the same parameter structure as the DB extractor configuration
 cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}

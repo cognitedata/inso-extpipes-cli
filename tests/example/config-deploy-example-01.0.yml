@@ -57,7 +57,7 @@ extpipes:
       documentation: Documentation which can include Mermaid diagrams?
       # optional
       # Usually user email is expected here, defaults to extpipes + version?
-      created-by: extpipes-cli@v3.0.1
+      created-by: extpipes-cli@v3.0.0
 
       # optional [{},{}]
       raw-tables:
