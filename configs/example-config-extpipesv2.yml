@@ -78,18 +78,17 @@ rawdbs:
 
 # follows the same parameter structure as the DB extractor configuration
 cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
-  # host: https://${EXTPIPES_CDF_CLUSTER}.cognitedata.com/
-  host: ${EXTPIPES_CDF_HOST}
-  project: ${EXTPIPES_CDF_PROJECT}
+  host: ${HOST}
+  project: ${PROJECT}
   #
   # AAD IdP login credentials:
   #
   idp-authentication:
-    client-id: ${EXTPIPES_IDP_CLIENT_ID}
-    secret: ${EXTPIPES_IDP_CLIENT_SECRET}
+    client-id: ${CLIENT_ID}
+    secret: ${CLIENT_SECRET}
     scopes:
-      - ${EXTPIPES_IDP_SCOPES}
-    token_url: ${EXTPIPES_IDP_TOKEN_URL}
+      - ${SCOPES}
+    token_url: ${TOKEN_URL}
 
 logger:
   file:

@@ -1,7 +1,7 @@
 [tool.poetry]
 # matching the name of the "script" hook, used from Dockerfile
 name = "extpipes-cli"
-version = "2.2.1"
+version = "3.0.1"
 description = "A CLI to deploy CDF Extraction Pipelines"
 authors = ["Peter Arwanitis <peter.arwanitis@cognite.com>", "Tugce Ozgur Oztetik <tugce.oztetik@cognite.com>"]
 license = "Apache-2.0"
@@ -12,42 +12,39 @@ packages = [
     { include="extpipes", from="src" },
 ]
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.dependencies]
+python = "^3.11"
+python-dotenv = "^0.21.1"
+pydantic = "^1.10.12"
+dependency-injector = {version = "^4.41.0", extras = ["yaml"]}
+click = "^8.1"
+cognite-sdk = {version = "^6", extras = ["pandas"]}
+rich = "^13"
+
+[tool.poetry.dev-dependencies]
 autopep8 = "^2.0.1"
+mypy = "^1.5"
+pre-commit = "^3.3"
+pytest = "^7.2.1"
 
 [tool.black]
 line-length = 120
-target_version = ['py310']
+target_version = ['py311']
 include = '\.py$'
 
 [tool.isort]
-# https://pycqa.github.io/isort/docs/configuration/black_compatibility.html
 profile = "black"
-line_length=120                # corresponds to -w  flag
-multi_line_output=3            # corresponds to -m  flag
-include_trailing_comma=true    # corresponds to -tc flag
-skip_glob = '^((?!py$).)*$'    # this makes sort all Python files
-known_third_party = ["click", "pytest"]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-python-dotenv = "^0.21.1"
-pydantic = "^1.10.4"
-dependency-injector = {version = "^4.41.0", extras = ["yaml"]}
-click = "^8.1.3"
-cognite-sdk = {version = "^5.2.0", extras = ["pandas"]}
-setuptools = "^62.1.0"
-rich = "^13.2.0"
-
-[tool.poetry.dev-dependencies]
-black = "^22.12.0"
-isort = "^5.11.4"
-flake8 = "^6.0.0"
-mypy = "^0.991"
-# autoflake = "=1.3"
-pre-commit = "^3.0.0"
-pytest = "^7.2.1"
-# pytest-cov = "^3.0.0"
+[tool.pytest.ini_options]
+filterwarnings = [
+  "ignore::DeprecationWarning:pkg_resources",  # TODO check again with dynaconf>=3.2.0 (introduced in setuptools==67.5.0)
+]
+# addopts = "--doctest-modules"
+# markers = [
+#     "full: Requiers all optional dependencies to run.",
+# ]
+pythonpath = ["src"]
+testpaths = ["tests"] # , "src/extpipes"
 
 [tool.poetry.scripts]
 # using a hyphen version and same as [tool.poetry].name
@@ -58,10 +55,11 @@ extpipes-cli = "extpipes.__main__:main"
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
 
-[tool.semantic_release]
-version_toml = [
-"pyproject.toml:tool.poetry.version"
-]
+# 231005 pa: deact semver
+# [tool.semantic_release]
+# version_toml = [
+# "pyproject.toml:tool.poetry.version"
+# ]
 version_variable = [
     "src/extpipes/__init__.py:__version__",
 ]

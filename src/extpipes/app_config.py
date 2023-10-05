@@ -1,42 +1,18 @@
-from enum import Enum
-from typing import List, Optional
+from enum import ReprEnum  # new in 3.11
+from typing import Optional
 
-from cognite.client.data_classes import Asset, DataSet, Event, Label, Sequence, TimeSeries
 from pydantic import Field
 
 from .common.base_model import Model
 
-# because within f'' strings no backslash-character is allowed
-NEWLINE = "\n"
 
-
-# mixin 'str' to 'Enum' to support comparison to string-values
-# https://docs.python.org/3/library/enum.html#others
-# https://stackoverflow.com/a/63028809/1104502
-class YesNoType(str, Enum):
-    yes = "yes"
-    no = "no"
-
-
-class CommandMode(str, Enum):
+class CommandMode(str, ReprEnum):
     DEPLOY = "deploy"
     # DELETE = "delete"
     # DIAGRAM = "diagram"
 
 
-# generic resolve_external_id approach
-supported_resource_types = {
-    "time_series": TimeSeries,
-    "data_sets": DataSet,
-    "events": Event,
-    "sequences": Sequence,
-    "assets": Asset,
-    "labels": Label,
-    "files": None,  # no data_class available for create(...)
-}
-
-
-class ScheduleType(str, Enum):
+class ScheduleType(str, ReprEnum):
     continuous = "Continuous"
     on_trigger = "On trigger"
 
@@ -45,31 +21,27 @@ class Contact(Model):
     name: Optional[str]
     email: Optional[str]
     role: Optional[str]
-    send_notification: Optional[bool]
+    sendNotification: Optional[bool]  # cognite-sdk doesn't use snake-case for this param
+
+
+class RawTable(Model):
+    db_name: str
+    table_name: str
 
 
 class Pipeline(Model):
-    # mandatory
-    schedule: ScheduleType | str
-    # az-func, adf, db, pi, ...
+    external_id: str
+    name: str
+    description: Optional[str]
+    data_set_external_id: str
+    schedule: Optional[ScheduleType | str]
+    contacts: Optional[list[Contact]] = Field(default_factory=list)
     source: Optional[str]
-    suffix: Optional[str]
-    # None/On trigger/Continuous/cron regex
-    contacts: Optional[List[Contact]] = Field(default_factory=list)
-    skip_rawtable: Optional[bool] = False
-
-
-class Rawtable(Model):
-    rawtable_name: str
-    short_name: Optional[str]
-    pipelines: List[Pipeline]
-
-
-class Rawdb(Model):
-    rawdb_name: str
-    dataset_external_id: str
-    short_name: Optional[str]
-    rawtables: List[Rawtable]
+    metadata: Optional[dict[str, str]]
+    documentation: Optional[str]
+    created_by: Optional[str]
+    raw_tables: Optional[list[RawTable]]
+    extpipe_config: Optional[dict[str, str]]
 
 
 class ExtpipesFeatures(Model):
@@ -81,7 +53,7 @@ class ExtpipesFeatures(Model):
     automatic_delete: Optional[bool]
 
     # with default values must come last
-    default_contacts: Optional[List[Contact]]
+    default_contacts: Optional[list[Contact]]
 
 
 class ExtpipesConfig(Model):
@@ -92,12 +64,10 @@ class ExtpipesConfig(Model):
     # here goes the main configuration
     features: Optional[ExtpipesFeatures] = Field(
         default=ExtpipesFeatures(
-            **dict(
-                extpipe_pattern="{source}:{rawdb-name}:{rawtable-name}:{suffix}",
-                automatic_delete=False,
-                default_contacts=[],
-            )
+            extpipe_pattern="{source}:{rawdb-name}:{rawtable-name}:{suffix}",
+            automatic_delete=False,
+            default_contacts=[],
         )
     )
 
-    rawdbs: List[Rawdb]
+    pipelines: list[Pipeline]

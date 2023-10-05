@@ -1,39 +1,99 @@
-#
-# 01.2 : empty namespaces and idp-cdf-mapping
-#
-bootstrap:
-
+extpipes:
   features:
-    with-special-groups: false
-    with-raw-capability: true
-    aggregated-level-name: all
-    group-prefix: cdf
-    dataset-suffix: ds
-    rawdb-suffix: db
-    rawdb-additional-variants:
-      - state
+    #        name: string [ 1 .. 140 ] characters
+    #  externalId: string [ 1 .. 255 ] characters
+    # description: string [ 1 .. 500 ] characters
 
-  idp-cdf-mappings: []
+    # new since v2.1.0
+    # The default and recommended value is: true
+    # to keep the deployment in sync with configuration
+    # which means non configured extpipes get automatically deleted
+    automatic-delete: true
 
-  namespaces: []
+    # can contain multiple contacts, can be overwritten on pipeline level
+    default-contacts:
+      - name: Yours Truly
+        email: yours.truly@cognite.com
+        role: admin
+        send-notification: false
 
-cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE_NAME}
-  # host: https://${BOOTSTRAP_CDF_CLUSTER}.cognitedata.com/
-  host: ${BOOTSTRAP_CDF_HOST}
-  project: ${BOOTSTRAP_CDF_PROJECT}
-  #
-  # AAD IdP sign-in credentials:
-  #
+    # TODO: how many features / defaults do we want to support?
+
+  pipelines:
+    # required
+    # max 255 char, External Id provided by client
+    # TODO: no magix here, straight names or should we provide a prefixing or `features.extpipe-pattern`?
+    # parameter names from API v1 with "CamelCase" transformed to lowercase "hyphen-case"
+    # TODO: just duplicate all of this just because it has a different schedule and extId?
+    # maybe use yaml anchors / alias feature to minimize duplication
+    - external-id: src:001:sap:sap_funcloc:continuous
+      # optional, default to external-id
+      name: src:001:sap:sap_funcloc:continuous
+      # optional
+      description: describe or defaults to auto-generated description, that it is "deployed through extpipes-cli@v3.0.0"
+      # optional, for deployments w/o full scoping?
+      data-set-external-id: src:001:sap
+      # optional: string or null^(On trigger|Continuous)|(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|s|m|h))+)|((((\d+,)+\d+|(\d+([/\-])\d+)|\d+|\*(/\d+)?) ?){5,7})$
+      # "On trigger", "Continuous" or cron expression
+      schedule: Continuous
+      # optional [{},{}]
+      # defaults to features.default-contacts (if exist)
+      contacts:
+        - name: Fizz Buzz
+          email: fizzbuzz@cognite.com
+          role: admin
+          send-notification: true
+      # optional {}
+      metadata:
+        # TODO: should be automatically created?
+        version: extpipes-cli@v3.0.1
+      # optional max 10000 char
+      # Documentation text field, supports Markdown for text formatting.
+      # TODO: simple option to link to another file in yaml? 10k can be quite long?!
+      documentation: Documentation which can include Mermaid diagrams?
+      # optional
+      # TODO: should be automatically created?
+      created-by: extpipes-cli@v3.0.1
+
+      # optional [{},{}]
+      raw-tables:
+        - db-name: src:001:sap
+          table-name: sap_funcloc
+
+# follows the same parameter structure as the DB extractor configuration
+cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
+  host: ${HOST}
+  project: ${PROJECT}
   idp-authentication:
-    client-id: ${BOOTSTRAP_IDP_CLIENT_ID}
-    secret: ${BOOTSTRAP_IDP_CLIENT_SECRET}
+    client-id: ${CLIENT_ID}
+    secret: ${CLIENT_SECRET}
     scopes:
-      - ${BOOTSTRAP_IDP_SCOPES}
-    token-url: ${BOOTSTRAP_IDP_TOKEN_URL}
+      - ${SCOPES}
+    token_url: ${TOKEN_URL}
 
-logger:
-  file:
-    path: ./logs/create-dev-logs.log
-    level: INFO
-  console:
-    level: INFO
+# https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
+# https://docs.python.org/3/howto/logging-cookbook.html
+logging:
+  version: 1
+  formatters:
+    formatter:
+      format: "[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s"
+  handlers:
+    file:
+      class: "logging.FileHandler"
+      filename: ./logs/deploy-trading.log
+      formatter: "formatter"
+      mode: "w"
+      level: "DEBUG"
+    console:
+      class: "logging.StreamHandler"
+      level: "DEBUG"
+      formatter: "formatter"
+      stream: "ext://sys.stderr"
+  root:
+    level: "INFO"
+    handlers: ["console", "file"]
+  loggers:
+    cognite-sdk:
+      level: "INFO"
+      handlers: ["console"]

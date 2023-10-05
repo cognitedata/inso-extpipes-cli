@@ -111,17 +111,17 @@ Below is an example configuration:
 ```yaml
 # follows the same parameter structure as the DB extractor configuration
 cognite:
-  host: ${EXTPIPES_CDF_HOST}
-  project: ${EXTPIPES_CDF_PROJECT}
+  host: ${HOST}
+  project: ${PROJECT}
   #
   # AAD IdP login credentials:
   #
   idp-authentication:
-    client-id: ${EXTPIPES_IDP_CLIENT_ID}
-    secret: ${EXTPIPES_IDP_CLIENT_SECRET}
+    client-id: ${CLIENT_ID}
+    secret: ${CLIENT_SECRET}
     scopes:
-      - ${EXTPIPES_IDP_SCOPES}
-    token_url: ${EXTPIPES_IDP_TOKEN_URL}
+      - ${SCOPES}
+    token_url: ${TOKEN_URL}
 
 # https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
 logging:
@@ -151,120 +151,87 @@ logging:
 
 Details about the environment variables:
 
-- `EXTPIPES_CDF_HOST`
+- `HOST`
   - The URL to your CDF cluster.
   - Example: `https://westeurope-1.cognitedata.com`
-- `EXTPIPES_CDF_PROJECT`
+- `PROJECT`
   - The CDF project.
-- `EXTPIPES_IDP_CLIENT_ID`
+- `CLIENT_ID`
   - The client ID of the app registration you have created for the CLI.
-- `EXTPIPES_IDP_CLIENT_SECRET`
+- `CLIENT_SECRET`
   - The client secret you have created for the app registration,
-- `EXTPIPES_IDP_TOKEN_URL = https://login.microsoftonline.com/<tenant id>/oauth2/v2.0/token`
+- `TOKEN_URL = https://login.microsoftonline.com/<tenant id>/oauth2/v2.0/token`
   - If you're using Azure AD, replace `<tenant id>` with your Azure tenant ID.
-- `EXTPIPES_IDP_SCOPES`
+- `SCOPES`
   - Usually: `https://<cluster-name>.cognitedata.com/.default`
 
 ### Configuration for `deploy` command
 
 In addition to the sections described above, the configuration file for `deploy` command requires more sections (some of them optional):
 
-
-- `extpipe-pattern` - optional format-string of the extpipes names (and externalIds), at them moment only for documentation and not used from implementation
-- `default-contacts` - optional list of contacts which will be added to extpipes as default, if not explict configured on pipeline level
-  - defined through list of
-    - `name`
-    - `email`
-    - `role`: `str`
-    - `send-notification` : `true|false`
-- `automatic-delete` - `true|false` optional flag, defaults to `true`
-- `rawdbs` (**your main configuration goes here**)
-  - defined through list of
-    - `rawdb-name`
-    - `dataset-external-id`
-    - `short-name`
-    - `rawtables`
-      - defined through list of
-        - `rawtable-name`
-        - `pipelines`
-          - defined through list of
-            - `source`
-            - `schedule` : `Continuous|On trigger`
-            - `skip-rawtable` : `true|false` (default `false`)
-            - `suffix`
-            - `contacts`
-              - defined through list of
-                - `name`
-                - `email`
-                - `role`: `str`
-                - `send-notification` : `true|false`
-
 Configuration example:
 
 ```yaml
-# extpipe-pattern only documentation atm
-extpipe-pattern: '{source}:{short-name}:{rawtable-name}:{suffix}'
+extpipes:
+  features:
+    # NOT USED: extpipe-pattern only documentation atm
+    extpipe-pattern: '{source}:{short-name}:{table-name}:{suffix}'
 
-# new since v2.1.0
-# The default and recommended value is: true
-# to keep the deployment in sync with configuration
-# which means non configured extpipes get automatically deleted
-automatic-delete: true
+    # The default and recommended value is: true
+    # to keep the deployment in sync with configuration
+    # which means non configured extpipes get automatically deleted
+    automatic-delete: true
 
-# can contain multiple contacts, can be overwritten on pipeline level
-default-contacts:
-  - name: Yours Truly
-    email: yours.truly@cognite.com
-    role: admin
-    send-notification: false
+    # can contain multiple contacts, can be overwritten on pipeline level
+    default-contacts:
+      - name: Yours Truly
+        email: yours.truly@cognite.com
+        role: admin
+        send-notification: false
 
-# following configuration creates four extpipes with names:
-#   adf:src:001:sap_funcloc
-#   db:src:001:sap_equipment
-#   az-func:src:002:weather_europe:hourly
-#   az-func:src:002:weather_europe:daily
-rawdbs:
-  # list of raw-dbs > containing rawtables > containing pipelines
-  - rawdb-name: src:001:sap:rawdb
-    dataset-external-id: src:001:sap
-    short-name: src:001
-    rawtables:
-      - rawtable-name: sap_funcloc
-        pipelines:
-        # source is a short-name identifying the pipeline source being
-        # a 'db-extractor (db)', an 'Azure Function (az-func)',
-        # or 'Azure Data Factory (adf)', 'Python script (py)', ..
-        - source: adf
-          schedule: Continuous
-          # since v2.2.0 'skip-rawtable' with default 'false' exists
-          # It allows to skip creation of the rawtable,
-          # to avoid automatic creation in case it is not needed
-          # FYI: Next v3 release will change the config-schema, to express
-          # raw-tables not being a leading, but optional element
-          skip-rawtable: false
-      - rawtable-name: sap_equipment
-        pipelines:
-        - source: db
-          schedule: Continuous
-          # default-contacts can be overwritten
-          contacts:
-            - name: Fizz Buzz
-              email: fizzbuzz@cognite.com
-              role: admin
-              send-notification: true
-  - rawdb-name: src:002:weather:rawdb
-    dataset-external-id: src:002:weather
-    short-name: src:002
-    rawtables:
-      - rawtable-name: weather_europe
-        # multiple pipelines for same raw-table
-        pipelines:
-        - source: az-func
-          suffix: hourly
-          schedule: Continuous
-        - source: az-func
-          suffix: daily
-          schedule: Continuous
+  pipelines:
+      # required
+      # max 255 char, external-id provided by client
+    - external-id: src:001:sap:sap_funcloc:continuous
+      # optional: str, default to external-id
+      name: src:001:sap:sap_funcloc:continuous
+      # optional: str
+      description: describe or defaults to auto-generated description, that it is "deployed through extpipes-cli@v3.0.0"
+      # optional: str
+      data-set-external-id: src:001:sap
+      # optional: "On trigger", "Continuous" or cron expression
+      schedule: Continuous
+      # optional: [{},{}]
+      # defaults to features.default-contacts (if exist)
+      contacts:
+        - name: Fizz Buzz
+          email: fizzbuzz@cognite.com
+          role: admin
+          send-notification: true
+      # optional: str
+      source: az-func
+      # optional: {}
+      metadata:
+        version: extpipes-cli@v3.1.0
+      # optional: str max 10000 char
+      # Documentation text field, supports Markdown for text formatting.
+      documentation: Documentation which can include Mermaid diagrams?
+      # optional: str
+      # Usually user email is expected here, defaults to extpipes + version?
+      created-by: extpipes-cli@v3.1.0
+
+      # optional: [{},{}]
+      raw-tables:
+        - db-name: src:001:sap
+          table-name: sap_funcloc
+
+      # optional: {}
+      extpipe-config:
+        # str
+        config: |
+          nested yaml/json/ini which is simply a string for this config
+        # optional: str
+        description: describe the config, or autogenerate?
 ```
 ## run local with poetry
 
@@ -331,21 +298,21 @@ jobs:
     runs-on: ubuntu-latest
     # environment variables
     env:
-      CDF_PROJECT: yourcdfproject
-      CDF_CLUSTER: bluefield
+      PROJECT: yourcdfproject
+      CLUSTER: bluefield
       IDP_TENANT: abcde-12345
-      CDF_HOST: https://bluefield.cognitedata.com/
+      HOST: https://bluefield.cognitedata.com/
       - name: Deploy extpipes
         # best practice is to use a tagged release (and not '@main')
         # find a released tag here: https://github.com/cognitedata/inso-extpipes-cli/releases
         uses: cognitedata/inso-expipes-cli@v2.2.1
         env:
-            EXTPIPES_IDP_CLIENT_ID: ${{ secrets.CLIENT_ID }}
-            EXTPIPES_IDP_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-            EXTPIPES_CDF_HOST: ${{ env.CDF_HOST }}
-            EXTPIPES_CDF_PROJECT: ${{ env.CDF_PROJECT }}
-            EXTPIPES_IDP_TOKEN_URL: https://login.microsoftonline.com/${{ env.IDP_TENANT }}/oauth2/v2.0/token
-            EXTPIPES_IDP_SCOPES: ${{ env.CDF_HOST }}.default
+            CLIENT_ID: ${{ secrets.CLIENT_ID }}
+            CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+            HOST: ${{ env.HOST }}
+            PROJECT: ${{ env.PROJECT }}
+            TOKEN_URL: https://login.microsoftonline.com/${{ env.IDP_TENANT }}/oauth2/v2.0/token
+            SCOPES: ${{ env.HOST }}.default
         # additional parameters for running the action
         with:
           config_file: ./configs/example-config-extpipes.yml

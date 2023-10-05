@@ -1,6 +1,7 @@
 import logging.config
+import os
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Type
 
 from dependency_injector import containers, providers
 from dotenv import load_dotenv
@@ -10,9 +11,9 @@ from .common.cognite_client import CogniteConfig, get_cognite_client
 
 
 def init_container(
-    container_cls: containers.Container,
+    container_cls: Type[containers.Container],
     config_path: str | Path = "/etc/f25e/config.yaml",
-    dotenv_path: str | Path = None,
+    dotenv_path: str | Path | None = None,
 ):
     """Spinning up container and
 
@@ -28,10 +29,17 @@ def init_container(
     load_dotenv(dotenv_path, override=True)
 
     container = container_cls()
-    container.config.from_yaml(config_path, required=True)
-    container.init_resources()  # i.e.logging
+    if os.getenv("GITHUB_ACTIONS") in ("true", True):
+        # if run from GITHUB_ACTIONS, the envvar is set to 'true' and the workspace-folder is mounted to
+        # -v "/home/runner/work/cdf-config-hub/cdf-config-hub":"/github/workspace"
+        # the buildpack image starts in the workspace-folder "/workspace",
+        # which requires to extend the path to load the config
+        container.config.from_yaml(Path("/github/workspace") / config_path, required=True)  # type: ignore
+    else:
+        container.config.from_yaml(config_path, required=True)  # type: ignore
 
-    # logging.debug(f"{container.config()=}")
+    logging.debug(f"{container.config()=}")
+    container.init_resources()  # i.e.logging
 
     return container
 
@@ -125,7 +133,7 @@ class DeployCommandContainer(CogniteContainer):
     extpipes = providers.Resource(ExtpipesConfig.parse_obj, obj=CogniteContainer.config.extpipes)
 
 
-ContainerSelector = {
+ContainerSelector: dict[CommandMode, Type[containers.Container]] = {
     # CommandMode.PREPARE: DeployCommandContainer,
     # CommandMode.DIAGRAM: DiagramCommandContainer,
     CommandMode.DEPLOY: DeployCommandContainer,
