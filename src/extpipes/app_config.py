@@ -6,6 +6,7 @@ from jinja2 import Environment, meta
 from pydantic import Field, model_validator, StringConstraints, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
+from . import __version__
 from .common.base_model import Model
 
 
@@ -48,6 +49,13 @@ class Pipeline(Model):
     created_by: Optional[str] = Field(default=None)
     raw_tables: list[RawTable] = Field(default=list())
     extpipe_config: Optional[Dict[str, str]] = Field(default=None)
+
+    @field_validator('metadata')
+    @classmethod
+    def ensure_metadata_to_have_version(cls, v: Dict[str, str]) -> Dict[str, str]:
+        if 'extpipes-cli-version' not in v:
+            v['extpipes-cli-version'] = __version__
+        return v
 
     @field_validator('external_id', 'name')
     @classmethod
