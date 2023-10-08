@@ -1,14 +1,10 @@
 extpipes:
   features:
-    #        name: string [ 1 .. 140 ] characters
-    #  externalId: string [ 1 .. 255 ] characters
-    # description: string [ 1 .. 500 ] characters
-
     # new since v2.1.0
-    # changeds default to false in v3
+    # changed: default to false in v3
     # The default and recommended value is: false
     # to keep the deployment in sync with configuration
-    # which means non configured extpipes can get automatically deleted
+    # which means non-configured extpipes can get automatically deleted
     automatic-delete: false
 
     # can contain multiple contacts, can be overwritten on pipeline level
@@ -28,7 +24,7 @@ extpipes:
     # TODO: just duplicate all of this just because it has a different schedule and extId?
     # maybe use yaml anchors / alias feature to minimize duplication
     - external-id: src:001:sap:sap_funcloc:continuous
-      # optional, default to external-id
+      # optional, requires naming-pattern provided if omitted
       name: src:001:sap:sap_funcloc:continuous
       # optional
       description: describe or defaults to auto-generated description, that it is "deployed through extpipes-cli@v3.0.0"
@@ -63,13 +59,13 @@ extpipes:
 
 # follows the same parameter structure as the DB extractor configuration
 cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
-  host: ${HOST}
+  host: https://${HOST}
   project: ${PROJECT}
   idp-authentication:
     client-id: ${CLIENT_ID}
     secret: ${CLIENT_SECRET}
     scopes:
-      - ${SCOPES}
+      - https://${HOST}/.default
     token_url: ${TOKEN_URL}
 
 # https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
@@ -85,10 +81,10 @@ logging:
       filename: ./logs/deploy-trading.log
       formatter: "formatter"
       mode: "w"
-      level: "DEBUG"
+      level: "INFO"
     console:
       class: "logging.StreamHandler"
-      level: "DEBUG"
+      level: "INFO"
       formatter: "formatter"
       stream: "ext://sys.stderr"
   root:

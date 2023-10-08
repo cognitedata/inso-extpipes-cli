@@ -1,37 +1,28 @@
 extpipes:
   features:
-    #        name: string [ 1 .. 140 ] characters
-    #  externalId: string [ 1 .. 255 ] characters
-    # description: string [ 1 .. 500 ] characters
-
-    # extpipe-pattern only documentation atm
-    naming-pattern: "{source}:{short-name}:{table-name}:{suffix}"
+    # naming-pattern: used for name generation bases on metadata fields. Useful with established naming convention
+    # notation: jinja2 template. each variable is a respective metadata key
+    naming-pattern: "{{source}}:{{table_name}}:some-suffix"
 
     # new since v2.1.0
-    # changeds default to false in v3
+    # changed: default to false in v3
     # The default and recommended value is: false
     # to keep the deployment in sync with configuration
-    # which means non configured extpipes can get automatically deleted
+    # which means non-configured extpipes can get automatically deleted
     automatic-delete: false
 
-    # can contain multiple contacts, can be overwritten on pipeline level
+    # new since v3.0.1 (merged with pipeline-level contacts)
+    # can contain multiple contacts, will be populated in addition to the pipeline level
     default-contacts:
       - name: Yours Truly
         email: yours.truly@cognite.com
         role: admin
         send-notification: false
 
-    # TODO: how many features / defaults do we want to support?
-
   pipelines:
-    # required
-    # max 255 char, External Id provided by client
-    # TODO: no magix here, straight names or should we provide a prefixing or `features.extpipe-pattern`?
-    # parameter names from API v1 with "CamelCase" transformed to lowercase "hyphen-case"
-    # TODO: just duplicate all of this just because it has a different schedule and extId?
-    # maybe use yaml anchors / alias feature to minimize duplication
+      # optional, requires naming-pattern provided if omitted
     - external-id: src:001:sap:sap_funcloc:continuous
-      # optional, default to external-id
+      # optional, requires naming-pattern provided if omitted
       name: src:001:sap:sap_funcloc:continuous
       # optional
       description: describe or defaults to auto-generated description, that it is "deployed through extpipes-cli@v3.0.0"
@@ -60,7 +51,7 @@ extpipes:
       # Usually user email is expected here, defaults to extpipes + version?
       created-by: extpipes-cli@v3.1.0
 
-      # optional [{},{}]
+      # optional, defaults to empty list []
       raw-tables:
         - db-name: src:001:sap
           table-name: sap_funcloc
@@ -81,13 +72,13 @@ extpipes:
 
 # follows the same parameter structure as the DB extractor configuration
 cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
-  host: ${HOST}
+  host: https://${HOST}
   project: ${PROJECT}
   idp-authentication:
     client-id: ${CLIENT_ID}
     secret: ${CLIENT_SECRET}
     scopes:
-      - ${SCOPES}
+      - https://${HOST}/.default
     token_url: ${TOKEN_URL}
 
 # https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
@@ -103,10 +94,10 @@ logging:
       filename: ./logs/deploy-trading.log
       formatter: "formatter"
       mode: "w"
-      level: "DEBUG"
+      level: "INFO"
     console:
       class: "logging.StreamHandler"
-      level: "DEBUG"
+      level: "INFO"
       formatter: "formatter"
       stream: "ext://sys.stderr"
   root:

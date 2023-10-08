@@ -43,16 +43,18 @@ class CommandDeploy(CommandBase):
             )
             for pipeline in self.extpipes_config.pipelines
         }
-        # Cognite SDK v6.30.1 does not support UPSERT (with ExtractionPipelineApply)
-        # build 3 lists create/update/update
+        # Cognite SDK v6.30.1 does NOT support UPSERT (with ExtractionPipelines)
+        # build 3 lists create/update/delete
         create_extpipes = [
             extpipe
             for external_id, extpipe in requested_extpipes.items()
             if external_id not in existing_extpipes.keys()
         ]
+
         update_extpipes = [
             extpipe for external_id, extpipe in requested_extpipes.items() if external_id in existing_extpipes.keys()
         ]
+
         delete_extpipes = [
             external_id for external_id in existing_extpipes.keys() if external_id not in requested_extpipes.keys()
         ]
