@@ -16,10 +16,10 @@ def to_hyphen_case(value: str) -> str:
 
 class Model(BaseSettings):
     model_config = SettingsConfigDict(
-        extra='ignore',
+        extra="ignore",
         # generate for each field an alias in hyphen-case (kebap)
         alias_generator=to_hyphen_case,
         # an aliased field may be populated by its name as given by the model attribute, as well as the alias
         # this supports both cases to be mixed
-        populate_by_name=True
+        populate_by_name=True,
     )

@@ -1,9 +1,9 @@
 import logging
 from enum import ReprEnum  # new in 3.11
-from typing import Optional, Dict, Set, Annotated
+from typing import Annotated, Dict, Optional, Set
 
 from jinja2 import Environment, meta
-from pydantic import Field, model_validator, StringConstraints, field_validator
+from pydantic import Field, StringConstraints, field_validator, model_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from . import __version__
@@ -50,18 +50,18 @@ class Pipeline(Model):
     raw_tables: list[RawTable] = Field(default=list())
     extpipe_config: Optional[Dict[str, str]] = Field(default=None)
 
-    @field_validator('metadata')
+    @field_validator("metadata")
     @classmethod
     def ensure_metadata_to_have_version(cls, v: Dict[str, str]) -> Dict[str, str]:
-        if 'extpipes-cli-version' not in v:
-            v['extpipes-cli-version'] = __version__
+        if "extpipes-cli-version" not in v:
+            v["extpipes-cli-version"] = __version__
         return v
 
-    @field_validator('external_id', 'name')
+    @field_validator("external_id", "name")
     @classmethod
     def validate_field_length(cls, v: Optional[str], info: ValidationInfo) -> Optional[str]:
         if v and len(v) > 255:
-            logging.warning(f'## {info.field_name} is longer than 255 characters and will be truncated: {v}')
+            logging.warning(f"## {info.field_name} is longer than 255 characters and will be truncated: {v}")
         return v[:255] if v else None
 
 
@@ -92,18 +92,18 @@ class ExtpipesConfig(Model):
 
     pipelines: list[Pipeline]
 
-    @model_validator(mode='after')
-    def check_pattern_condition(self) -> 'ExtpipesConfig':
+    @model_validator(mode="after")
+    def check_pattern_condition(self) -> "ExtpipesConfig":
         if self.features.naming_pattern:
             misconfigured = [_pipeline.external_id for _pipeline in self.pipelines if _pipeline.external_id]
             if misconfigured:
                 logging.error(f"## Misconfigured pipelines external_id: {misconfigured}")
-                raise ValueError('With pattern provider, pipelines should not have external_id defined.')
+                raise ValueError("With pattern provider, pipelines should not have external_id defined.")
 
             misconfigured = [_pipeline.name for _pipeline in self.pipelines if _pipeline.name]
             if misconfigured:
                 logging.error(f"## Misconfigured pipelines name: {misconfigured}")
-                raise ValueError('With pattern provider, pipelines should not have names defined.')
+                raise ValueError("With pattern provider, pipelines should not have names defined.")
 
             def extract_jinja_variables(template: str) -> Set[str]:
                 env = Environment()
@@ -124,6 +124,6 @@ class ExtpipesConfig(Model):
             if len(misconfigured) > 0:
                 logging.info(f"## Required metadata properties: {required_fields}")
                 logging.error(f"## Misconfigured pipelines. Required metadata properties are required: {misconfigured}")
-                raise ValueError('With pattern provider, pipelines should have respective metadata fields configured.')
+                raise ValueError("With pattern provider, pipelines should have respective metadata fields configured.")
 
         return self

@@ -1,6 +1,6 @@
 import logging
 import pprint
-from typing import Self, Dict
+from typing import Dict, Self
 
 from cognite.client import CogniteClient
 from cognite.client.exceptions import CogniteNotFoundError
@@ -28,7 +28,7 @@ class CommandBase:
 
         self.client: CogniteClient = self.container.cognite_client()
         self.cdf_project = self.client.config.project
-        self.data_sets_in_scope = dict()  # will be filled in within `validate`
+        self.data_sets_in_scope = {}  # will be filled in within `validate`
 
         logging.info(f"Successful connection to CDF client to project: '{self.cdf_project}'")
 
@@ -69,7 +69,7 @@ class CommandBase:
     def ensure_raw_tables(self):
         # RAW
         def find_missing(existing: Dict, target: Dict) -> Dict:
-            missing = dict()
+            missing = {}
 
             for key, value_list in target.items():
                 # If the key exists in the existing dictionary, find the difference.
@@ -84,7 +84,7 @@ class CommandBase:
             return missing
 
         # build dictionary of configured dbs:tables
-        requested_raw_tables: Dict = dict()
+        requested_raw_tables: Dict = {}
         for pipeline in self.extpipes_config.pipelines:
             for raw_table in pipeline.raw_tables:
                 if raw_table.db_name in requested_raw_tables:
@@ -92,7 +92,7 @@ class CommandBase:
                 else:
                     requested_raw_tables[raw_table.db_name] = [raw_table.table_name]
         # get existing dbs/tables into a dict for fast lookup
-        cdf_dbs: Dict = dict()
+        cdf_dbs: Dict = {}
         for db_name in {_db.name for _db in self.client.raw.databases.list(limit=None)}:
             cdf_dbs[db_name] = [table.name for table in self.client.raw.tables.list(db_name=db_name, limit=None)]
 

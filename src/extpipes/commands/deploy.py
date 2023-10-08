@@ -17,7 +17,6 @@ def _render_template(template: str, metadata: Dict[str, str]) -> str:
 
 
 class CommandDeploy(CommandBase):
-
     def command(self) -> None:
         # get existing extpipes
         existing_extpipes = {ep.external_id: ep for ep in self.client.extraction_pipelines.list(limit=None)}
@@ -25,12 +24,10 @@ class CommandDeploy(CommandBase):
         # get requested from config
         requested_extpipes = {
             pipeline.external_id: ExtractionPipeline(  # key  # value
-                external_id=pipeline.external_id if pipeline.external_id else _render_template(
-                    self.naming_pattern, pipeline.metadata
-                ),
-                name=pipeline.name if pipeline.name else _render_template(
-                    self.naming_pattern, pipeline.metadata
-                ),
+                external_id=pipeline.external_id
+                if pipeline.external_id
+                else _render_template(self.naming_pattern, pipeline.metadata),
+                name=pipeline.name if pipeline.name else _render_template(self.naming_pattern, pipeline.metadata),
                 description=pipeline.description,
                 data_set_id=self.data_sets_in_scope.get(pipeline.data_set_external_id).id,  # type: ignore
                 raw_tables=[{"dbName": _t.db_name, "tableName": _t.table_name} for _t in pipeline.raw_tables],

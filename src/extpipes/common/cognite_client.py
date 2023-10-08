@@ -49,11 +49,11 @@ class CogniteConfig(Model):
     def client_secret(self) -> str:
         return self.idp_authentication.secret
 
-    @field_validator('host')
+    @field_validator("host")
     @classmethod
     def host_must_contain_https(cls, v: str) -> str:
         if not v.startswith("https"):
-            raise ValueError('must start with https://')
+            raise ValueError("must start with https://")
         return v
 
 
