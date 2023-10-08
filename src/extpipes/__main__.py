@@ -31,11 +31,13 @@ from typing import Dict, Optional
 
 import click
 from click import Context
+from pydantic import ValidationError
 
 from . import __version__
 from .app_config import CommandMode
 from .app_exceptions import ExtpipesConfigError
 from .commands.deploy import CommandDeploy
+
 
 # '''
 #           888 d8b          888
@@ -54,7 +56,7 @@ from .commands.deploy import CommandDeploy
 @click.option(
     "--cdf-project-name",
     help="CDF Project to interact with the CDF API, the 'PROJECT',"
-    "environment variable can be used instead. Required for OAuth2.",
+         "environment variable can be used instead. Required for OAuth2.",
     envvar="PROJECT",
 )
 # TODO: is cluster and alternative for host?
@@ -62,46 +64,46 @@ from .commands.deploy import CommandDeploy
     "--cluster",
     default="westeurope-1",
     help="The CDF cluster where CDF Project is hosted (e.g. greenfield, europe-west1-1),"
-    "Provide this or make sure to set the 'CLUSTER' environment variable. "
-    "Default: westeurope-1",
+         "Provide this or make sure to set the 'CLUSTER' environment variable. "
+         "Default: westeurope-1",
     envvar="CLUSTER",
 )
 @click.option(
     "--host",
     default="https://westeurope-1.cognitedata.com/",
     help="The CDF host where CDF Project is hosted (e.g. https://westeurope-1.cognitedata.com),"
-    "Provide this or make sure to set the 'HOST' environment variable."
-    "Default: https://westeurope-1.cognitedata.com/",
+         "Provide this or make sure to set the 'HOST' environment variable."
+         "Default: https://westeurope-1.cognitedata.com/",
     envvar="HOST",
 )
 @click.option(
     "--client-id",
     help="IdP client ID to interact with the CDF API. Provide this or make sure to set the "
-    "'CLIENT_ID' environment variable if you want to authenticate with OAuth2.",
+         "'CLIENT_ID' environment variable if you want to authenticate with OAuth2.",
     envvar="CLIENT_ID",
 )
 @click.option(
     "--client-secret",
     help="IdP client secret to interact with the CDF API. Provide this or make sure to set the "
-    "'CLIENT_SECRET' environment variable if you want to authenticate with OAuth2.",
+         "'CLIENT_SECRET' environment variable if you want to authenticate with OAuth2.",
     envvar="CLIENT_SECRET",
 )
 @click.option(
     "--token-url",
     help="IdP token URL to interact with the CDF API. Provide this or make sure to set the "
-    "'TOKEN_URL' environment variable if you want to authenticate with OAuth2.",
+         "'TOKEN_URL' environment variable if you want to authenticate with OAuth2.",
     envvar="TOKEN_URL",
 )
 @click.option(
     "--scopes",
     help="IdP scopes to interact with the CDF API, relevant for OAuth2 authentication method. "
-    "The 'SCOPES' environment variable can be used instead.",
+         "The 'SCOPES' environment variable can be used instead.",
     envvar="SCOPES",
 )
 @click.option(
     "--audience",
     help="IdP Audience to interact with the CDF API, relevant for OAuth2 authentication method. "
-    "The 'AUDIENCE' environment variable can be used instead.",
+         "The 'AUDIENCE' environment variable can be used instead.",
     envvar="AUDIENCE",
 )
 @click.option(
@@ -120,23 +122,23 @@ from .commands.deploy import CommandDeploy
 )
 @click.pass_context
 def extpipes_cli(
-    # click.core.Context
-    context: Context,
-    # cdf
-    cluster: str = "westeurope-1",
-    cdf_project_name: Optional[str] = None,
-    host: str = None,
-    # cdf idp
-    client_id: Optional[str] = None,
-    client_secret: Optional[str] = None,
-    token_url: Optional[str] = None,
-    scopes: Optional[str] = None,
-    audience: Optional[str] = None,
-    # cli
-    # TODO: dotenv_path: Optional[click.Path] = None,
-    dotenv_path: Optional[str] = None,
-    debug: bool = False,
-    dry_run: bool = False,
+        # click.core.Context
+        context: Context,
+        # cdf
+        cluster: str = "westeurope-1",
+        cdf_project_name: Optional[str] = None,
+        host: str = None,
+        # cdf idp
+        client_id: Optional[str] = None,
+        client_secret: Optional[str] = None,
+        token_url: Optional[str] = None,
+        scopes: Optional[str] = None,
+        audience: Optional[str] = None,
+        # cli
+        # TODO: dotenv_path: Optional[click.Path] = None,
+        dotenv_path: Optional[str] = None,
+        debug: bool = False,
+        dry_run: bool = False,
 ) -> None:
     context.obj = {
         # cdf
@@ -175,16 +177,20 @@ def deploy(obj: Dict, config_file: str, automatic_delete: bool = True) -> None:
             config_file,
             command=CommandMode.DEPLOY,
             debug=obj["debug"],
-            automatic_delete=automatic_delete,
             dry_run=obj["dry_run"],
         )
         command.validate_config()
         command.command()
 
         click.echo(click.style("Extraction Pipelines deployed", fg="green"))
-
+    except ValidationError as e:
+        for error in e.errors():
+            field_path = ".".join(map(str, error['loc']))  # Convert tuple path (including indices) to dot notation
+            click.echo(f"Error in field '{field_path}': {error['msg']}")
+        exit(code=126)
     except ExtpipesConfigError as e:
-        exit(click.echo(click.style(e.message, fg="red")))
+        click.echo(click.style(e.message, fg="red"))
+        exit(code=127)
 
 
 extpipes_cli.add_command(deploy)

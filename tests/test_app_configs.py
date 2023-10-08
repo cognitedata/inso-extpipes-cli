@@ -9,6 +9,7 @@ from extpipes.app_container import (
     DeployCommandContainer,
     init_container,
 )
+from extpipes.commands.deploy import _render_template
 from tests.constants import ROOT_DIRECTORY
 
 print(ROOT_DIRECTORY)
@@ -22,6 +23,11 @@ def generate_deploy_config_01_is_valid_test_data():
     )
     yield pytest.param(
         config := ROOT_DIRECTORY / "example/config-deploy-example-01.1.yml",
+        ROOT_DIRECTORY / "example/.env_mock",
+        id=config.name,
+    )
+    yield pytest.param(
+        config := ROOT_DIRECTORY / "example/config-deploy-example-01.2.yml",
         ROOT_DIRECTORY / "example/.env_mock",
         id=config.name,
     )
@@ -48,7 +54,9 @@ def test_deploy_config_01_is_valid(example_file: Path, dotenv_path: Path):
     # must contain extpipes section
     assert container.extpipes()
     assert isinstance(container.extpipes().features.default_contacts, list)
-    assert container.extpipes().features.extpipe_pattern is None
     assert isinstance(container.extpipes().pipelines, list)
     # must be able to instantiate a CogniteClient (even with mocked client/secret)
     assert container.cognite_client().config.project
+    if container.extpipes().features.naming_pattern:
+        for _pipeline in container.extpipes().pipelines:
+            assert _render_template(container.extpipes().features.naming_pattern, _pipeline.metadata)

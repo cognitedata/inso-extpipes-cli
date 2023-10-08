@@ -115,7 +115,7 @@ class BaseContainer(containers.DeclarativeContainer):
 class CogniteContainer(BaseContainer):
     # provides config.cognite:dict as pydantic CogniteConfig object
     # and reveals all pydantic errors on container.init_resource
-    cognite_config = providers.Resource(CogniteConfig.parse_obj, obj=BaseContainer.config.cognite)
+    cognite_config = providers.Resource(CogniteConfig.model_validate, obj=BaseContainer.config.cognite)
 
     cognite_client = providers.Factory(
         get_cognite_client,
@@ -130,7 +130,7 @@ class DeployCommandContainer(CogniteContainer):
         CogniteContainer (_type_): _description_
     """
 
-    extpipes = providers.Resource(ExtpipesConfig.parse_obj, obj=CogniteContainer.config.extpipes)
+    extpipes = providers.Resource(ExtpipesConfig.model_validate, obj=CogniteContainer.config.extpipes)
 
 
 ContainerSelector: dict[CommandMode, Type[containers.Container]] = {

@@ -141,4 +141,7 @@ dmypy.json
 # vscode folder
 .vscode/
 
+# avoid automatic file add into git commit
+configs/
+
 Pipfile

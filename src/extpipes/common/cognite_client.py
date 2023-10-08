@@ -1,16 +1,17 @@
 import logging.config
-from typing import Optional
 
 # TODO: PEP 484 Stub Files issue?
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import OAuthClientCredentials
+from pydantic import Field, field_validator
 
+from .. import __version__
 from ..common.base_model import Model
 
 
 class CogniteIdpConfig(Model):
     # fields required for OIDC client-credentials authentication
-    client_name: Optional[str]
+    client_name: str = Field(default=f"inso-extpipes-cli:{__version__}")
     client_id: str
     secret: str
     scopes: list[str]
@@ -38,7 +39,7 @@ class CogniteConfig(Model):
 
     @property
     def client_name(self) -> str:
-        return self.idp_authentication.client_name or "bootstrap-client"
+        return self.idp_authentication.client_name or "extpipes-cli-client"
 
     @property
     def client_id(self) -> str:
@@ -47,6 +48,13 @@ class CogniteConfig(Model):
     @property
     def client_secret(self) -> str:
         return self.idp_authentication.secret
+
+    @field_validator('host')
+    @classmethod
+    def host_must_contain_https(cls, v: str) -> str:
+        if not v.startswith("https"):
+            raise ValueError('must start with https://')
+        return v
 
 
 #######################
