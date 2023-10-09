@@ -54,56 +54,56 @@ from .commands.deploy import CommandDeploy
 @click.version_option(prog_name="extpipes_cli", version=__version__)
 @click.option(
     "--cdf-project-name",
-    help="CDF Project to interact with the CDF API, the 'PROJECT',"
+    help="CDF Project to interact with the CDF API, the 'CDF_PROJECT',"
     "environment variable can be used instead. Required for OAuth2.",
-    envvar="PROJECT",
+    envvar="CDF_PROJECT",
 )
 # TODO: is cluster and alternative for host?
 @click.option(
     "--cluster",
-    default="westeurope-1",
-    help="The CDF cluster where CDF Project is hosted (e.g. greenfield, europe-west1-1),"
-    "Provide this or make sure to set the 'CLUSTER' environment variable. "
-    "Default: westeurope-1",
-    envvar="CLUSTER",
+    default="api",
+    help="The CDF cluster where CDF Project is hosted (e.g. api, europe-west1-1),"
+    "Provide this or make sure to set the 'CLCDF_USTER' environment variable. "
+    "Default: api",
+    envvar="CDF_CLUSTER",
 )
 @click.option(
     "--host",
-    default="https://westeurope-1.cognitedata.com/",
-    help="The CDF host where CDF Project is hosted (e.g. https://westeurope-1.cognitedata.com),"
-    "Provide this or make sure to set the 'HOST' environment variable."
-    "Default: https://westeurope-1.cognitedata.com/",
-    envvar="HOST",
+    default="https://api.cognitedata.com/",
+    help="The CDF host where CDF Project is hosted (e.g. https://api.cognitedata.com),"
+    "Provide this or make sure to set the 'CDF_HOST' environment variable."
+    "Default: https://api.cognitedata.com/",
+    envvar="CDF_HOST",
 )
 @click.option(
     "--client-id",
     help="IdP client ID to interact with the CDF API. Provide this or make sure to set the "
-    "'CLIENT_ID' environment variable if you want to authenticate with OAuth2.",
-    envvar="CLIENT_ID",
+    "'CDF_CLIENT_ID' environment variable if you want to authenticate with OAuth2.",
+    envvar="CDF_CLIENT_ID",
 )
 @click.option(
     "--client-secret",
     help="IdP client secret to interact with the CDF API. Provide this or make sure to set the "
-    "'CLIENT_SECRET' environment variable if you want to authenticate with OAuth2.",
-    envvar="CLIENT_SECRET",
+    "'CDF_CLIENT_SECRET' environment variable if you want to authenticate with OAuth2.",
+    envvar="CDF_CLIENT_SECRET",
 )
 @click.option(
     "--token-url",
     help="IdP token URL to interact with the CDF API. Provide this or make sure to set the "
-    "'TOKEN_URL' environment variable if you want to authenticate with OAuth2.",
-    envvar="TOKEN_URL",
+    "'CDF_TOKEN_URL' environment variable if you want to authenticate with OAuth2.",
+    envvar="CDF_TOKEN_URL",
 )
 @click.option(
     "--scopes",
     help="IdP scopes to interact with the CDF API, relevant for OAuth2 authentication method. "
-    "The 'SCOPES' environment variable can be used instead.",
-    envvar="SCOPES",
+    "The 'CDF_SCOPES' environment variable can be used instead.",
+    envvar="CDF_SCOPES",
 )
 @click.option(
     "--audience",
     help="IdP Audience to interact with the CDF API, relevant for OAuth2 authentication method. "
-    "The 'AUDIENCE' environment variable can be used instead.",
-    envvar="AUDIENCE",
+    "The 'CDF_AUDIENCE' environment variable can be used instead.",
+    envvar="CDF_AUDIENCE",
 )
 @click.option(
     "--dotenv-path",
@@ -124,7 +124,7 @@ def extpipes_cli(
     # click.core.Context
     context: Context,
     # cdf
-    cluster: str = "westeurope-1",
+    cluster: str = "api",
     cdf_project_name: Optional[str] = None,
     host: str = None,
     # cdf idp
@@ -177,6 +177,7 @@ def deploy(obj: Dict, config_file: str, automatic_delete: bool = True) -> None:
             command=CommandMode.DEPLOY,
             debug=obj["debug"],
             dry_run=obj["dry_run"],
+            dotenv_path=obj["dotenv_path"],
         )
         command.validate_config()
         command.command()

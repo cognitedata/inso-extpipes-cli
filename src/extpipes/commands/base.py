@@ -1,5 +1,6 @@
 import logging
 import pprint
+from pathlib import Path
 from typing import Dict, Self
 
 from cognite.client import CogniteClient
@@ -12,12 +13,21 @@ from ..app_exceptions import ExtpipesConfigError
 
 
 class CommandBase:
-    def __init__(self, config_path: str, command: CommandMode, debug: bool, dry_run: bool):
-        logging.info(f"Starting CDF Extraction Pipelines version <v{__version__}> for command: <{command}>")
+    def __init__(
+        self,
+        config_path: str,
+        command: CommandMode,
+        debug: bool,
+        dry_run: bool,
+        dotenv_path: str | Path | None = None,
+    ):
 
         # validate and load config according to command-mode
         ContainerCls = ContainerSelector[command]
-        self.container = init_container(ContainerCls, config_path)
+        self.container = init_container(ContainerCls, config_path=config_path, dotenv_path=dotenv_path)
+
+        # logging is now configured
+        logging.info(f"Starting CDF Extraction Pipelines version <v{__version__}> for command: <{command}>")
 
         # Pull the config out of the container
         self.extpipes_config: ExtpipesConfig = self.container.extpipes()
