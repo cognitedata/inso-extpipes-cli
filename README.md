@@ -6,7 +6,7 @@ inso-extpipes-cli
 - [scope of work](#scope-of-work)
   - [to be done](#to-be-done)
 - [how to run](#how-to-run)
-- [ExtPipes CLI commands](#extpipes-cli-commands)
+- [Extpipes CLI commands](#extpipes-cli-commands)
   - [`Deploy` command](#deploy-command)
   - [Configuration](#configuration)
     - [Configuration for all commands](#configuration-for-all-commands)
@@ -18,16 +18,16 @@ inso-extpipes-cli
     - [production build](#production-build)
     - [development build](#development-build)
   - [run as github action](#run-as-github-action)
-- [Contribute](#contribute)
-  - [Semantic Versioning](#semantic-versioning)
+  - [Contribute](#contribute)
+  - [Versioning](#versioning)
 # scope of work
 
 - It provides a configuration driven deployment for Cognite Extraction Pipelines (named `extpipes` in short)
 - Support to run it
-    - from `poetry run`
-    - from `python -m`
-    - from `docker run`
-    - and as GitHub Action
+  - from `poetry run`
+  - from `python -m`
+  - from `docker run`
+  - and as GitHub Action
 
 - templates used for implementation are
   - `cognitedata/transformation-cli`
@@ -53,7 +53,7 @@ Follow the initial setup first
 2. Change `.env_example` to `.env`
 3. Fill out `.env`
 
-# ExtPipes CLI commands
+# Extpipes CLI commands
 
 ## `Deploy` command
 
@@ -72,23 +72,56 @@ Usage: extpipes-cli [OPTIONS] COMMAND [ARGS]...
 
 Options:
   --version                Show the version and exit.
-  --dry-run [yes|no]       Log only planned CDF API actions while doing
-                           nothing. Defaults to 'no'.
+  --cdf-project-name TEXT  CDF Project to interact with the CDF API, the
+                           'CDF_PROJECT',environment variable can be used
+                           instead. Required for OAuth2.
+  --cluster TEXT           The CDF cluster where CDF Project is hosted (e.g.
+                           api, europe-west1-1),Provide this or make sure to
+                           set the 'CLCDF_USTER' environment variable.
+                           Default: api
+  --host TEXT              The CDF host where CDF Project is hosted (e.g.
+                           https://api.cognitedata.com),Provide this or make
+                           sure to set the 'CDF_HOST' environment
+                           variable.Default: https://api.cognitedata.com/
+  --client-id TEXT         IdP client ID to interact with the CDF API. Provide
+                           this or make sure to set the 'CDF_CLIENT_ID'
+                           environment variable if you want to authenticate
+                           with OAuth2.
+  --client-secret TEXT     IdP client secret to interact with the CDF API.
+                           Provide this or make sure to set the
+                           'CDF_CLIENT_SECRET' environment variable if you
+                           want to authenticate with OAuth2.
+  --token-url TEXT         IdP token URL to interact with the CDF API. Provide
+                           this or make sure to set the 'CDF_TOKEN_URL'
+                           environment variable if you want to authenticate
+                           with OAuth2.
+  --scopes TEXT            IdP scopes to interact with the CDF API, relevant
+                           for OAuth2 authentication method. The 'CDF_SCOPES'
+                           environment variable can be used instead.
+  --audience TEXT          IdP Audience to interact with the CDF API, relevant
+                           for OAuth2 authentication method. The
+                           'CDF_AUDIENCE' environment variable can be used
+                           instead.
+  --dotenv-path TEXT       Provide a relative or absolute path to an .env file
+                           (for command line usage only)
+  --debug                  Print debug information
+  --dry-run                Log only planned CDF API actions while doing
+                           nothing. Defaults to False.
+  -h, --help               Show this message and exit.
+
+Commands:
+  deploy  Deploy a list of Extraction Pipelines from a configuration file
 ```
 
 ```bash
 ➟  extpipes-cli deploy --help
 Usage: extpipes-cli deploy [OPTIONS] [CONFIG_FILE]
 
-  Deploy a set of extpipes from a config-file
+  Deploy a list of Extraction Pipelines from a configuration file
 
 Options:
-  --debug                      Print debug information
-  --automatic-delete [yes|no]  Purge extpipes which are not specified in
-                               config-file automatically (this is the default
-                               behavior, to keep deployment in sync with
-                               configuration)
-  -h, --help                   Show this message and exit.
+  --automatic-delete  Delete extpipes which are not specified in config-file
+  -h, --help          Show this message and exit.
 ```
 
 ## Configuration
@@ -111,17 +144,17 @@ Below is an example configuration:
 ```yaml
 # follows the same parameter structure as the DB extractor configuration
 cognite:
-  host: ${HOST}
-  project: ${PROJECT}
+  host: ${CDF_HOST}
+  project: ${CDF_PROJECT}
   #
   # AAD IdP login credentials:
   #
   idp-authentication:
-    client-id: ${CLIENT_ID}
-    secret: ${CLIENT_SECRET}
+    client-id: ${CDF_CLIENT_ID}
+    secret: ${CDF_CLIENT_SECRET}
     scopes:
-      - ${SCOPES}
-    token_url: ${TOKEN_URL}
+      - ${CDF_SCOPES}
+    token_url: ${CDF_TOKEN_URL}
 
 # https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
 logging:
@@ -233,6 +266,7 @@ extpipes:
         # optional: str
         description: describe the config, or autogenerate?
 ```
+
 ## run local with poetry
 
 ```bash
@@ -287,7 +321,6 @@ Debugging the Docker container with all dev-dependencies and poetry installed
 # 'src/' changes are mounted to your host ./src folder
 ```
 
-
 ## run as github action
 
 ```yaml
@@ -317,17 +350,19 @@ jobs:
         with:
           config_file: ./configs/example-config-extpipes.yml
 ```
-# Contribute
+
+## Contribute
+
 1. `poetry install`
 2. To run all checks locally - which is typically needed if the GitHub check is failing - e.g. you haven't set up `pre-commit` to run automatically:
-  - `poetry install && poetry shell`
-  - `pre-commit install`  # Only needed if not installed
-  - `pre-commit run --all-files`
 
-## Semantic Versioning
-- Uses `semantic-release` to create version tags.
-- The rules for commit messages are conventional commits, see [conventionalcommits](https://www.conventionalcommits.org/en/v1.0.0-beta.4/#summary%3E)
-- Remark: If version needs change, before merge, make sure commit title has elements mentioned on `conventionalcommits`
-- Remark: with new version change, bump will automatically update
+   - `poetry install && poetry shell`
+   - `pre-commit install`  # Only needed if not installed
+   - `pre-commit run --all-files`
+
+## Versioning
+
+- Remark: with new version change, manually changes required in
   - the version on `pyproject.toml`
   - the version in `src/extpipes/__init__` (used by `--version` parameter).
+  - the `action.yml` file

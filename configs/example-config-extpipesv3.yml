@@ -2,7 +2,7 @@ extpipes:
   features:
     # naming-pattern: used for name generation bases on metadata fields. Useful with established naming convention
     # notation: jinja2 template. each variable is a respective metadata key
-    naming-pattern: "{{source}}:{{table_name}}:some-suffix"
+    naming-pattern: "{{source}}:{{target}}:{{suffix}}"
 
     # new since v2.1.0
     # changed: default to false in v3
@@ -20,7 +20,21 @@ extpipes:
         send-notification: false
 
   pipelines:
-      # optional, requires naming-pattern provided if omitted
+    - # automatic created external-id & name: cog-func:sap:daily
+      metadata:
+        # values for 'naming-pattern' to generate external-id and name
+        source: cog-func
+        target: sap
+        suffix: daily
+      # optional
+      description: describe or defaults to auto-generated description, that it is "deployed through extpipes-cli@v3.0.0"
+      # optional, for deployments w/o full scoping?
+      data-set-external-id: src:001:sap
+      # optional: string or null^(On trigger|Continuous)|(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|s|m|h))+)|((((\d+,)+\d+|(\d+([/\-])\d+)|\d+|\*(/\d+)?) ?){5,7})$
+      # "On trigger", "Continuous" or cron expression
+      schedule: Continuous
+
+    # optional, requires naming-pattern provided if omitted
     - external-id: src:001:sap:sap_funcloc:continuous
       # optional, requires naming-pattern provided if omitted
       name: src:001:sap:sap_funcloc:continuous
@@ -72,14 +86,14 @@ extpipes:
 
 # follows the same parameter structure as the DB extractor configuration
 cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
-  host: https://${HOST}
-  project: ${PROJECT}
+  host: https://${CDF_HOST}
+  project: ${CDF_PROJECT}
   idp-authentication:
-    client-id: ${CLIENT_ID}
-    secret: ${CLIENT_SECRET}
+    client-id: ${CDF_CLIENT_ID}
+    secret: ${CDF_CLIENT_SECRET}
     scopes:
-      - https://${HOST}/.default
-    token_url: ${TOKEN_URL}
+      - https://${CDF_HOST}/.default
+    token_url: ${CDF_TOKEN_URL}
 
 # https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
 # https://docs.python.org/3/howto/logging-cookbook.html

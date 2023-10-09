@@ -5,7 +5,7 @@ extpipes:
     # description: string [ 1 .. 500 ] characters
 
     # extpipe-pattern only documentation atm
-    extpipe-pattern: '{source}:{short-name}:{rawtable-name}:{suffix}'
+    extpipe-pattern: "{source}:{short-name}:{rawtable-name}:{suffix}"
 
     # new since v2.1.0
     # The default and recommended value is: true
@@ -33,36 +33,36 @@ extpipes:
       rawtables:
         - rawtable-name: sap_funcloc
           pipelines:
-          # source is a short-name identifying the pipeline source being
-          # a 'db-extractor (db)', an 'Azure Function (az-func)',
-          # or 'Azure Data Factory (adf)', 'Python script (py)', ..
-          - source: adf
-            # since v2.2.0 'skip-rawtable' with default 'false' exists
-            # it allows to skip creation of the rawtable,
-            # to avoid automatic creation in case it is not needed
-            # FYI: Next v3 release will change the config-schema, to express
-            # raw-tables not being a leading, but optional element
-            skip-rawtable: false
-            schedule: Continuous
+            # source is a short-name identifying the pipeline source being
+            # a 'db-extractor (db)', an 'Azure Function (az-func)',
+            # or 'Azure Data Factory (adf)', 'Python script (py)', ..
+            - source: adf
+              # since v2.2.0 'skip-rawtable' with default 'false' exists
+              # it allows to skip creation of the rawtable,
+              # to avoid automatic creation in case it is not needed
+              # FYI: Next v3 release will change the config-schema, to express
+              # raw-tables not being a leading, but optional element
+              skip-rawtable: false
+              schedule: Continuous
         - rawtable-name: sap_equipment
           pipelines:
-          - source: db
-            schedule: Continuous
-            # default-contacts can be overwritten
-            contacts:
-              - name: Fizz Buzz
-                email: fizzbuzz@cognite.com
-                role: admin
-                send-notification: true
+            - source: db
+              schedule: Continuous
+              # default-contacts can be overwritten
+              contacts:
+                - name: Fizz Buzz
+                  email: fizzbuzz@cognite.com
+                  role: admin
+                  send-notification: true
     - rawdb-name: src:all:rawdb
       dataset-external-id: src:all
       short-name: src:all
       rawtables:
         - rawtable-name: skiptable
           pipelines:
-          - source: az-func
-            skip-rawtable: true
-            schedule: Continuous
+            - source: az-func
+              skip-rawtable: true
+              schedule: Continuous
     - rawdb-name: src:002:weather:rawdb
       dataset-external-id: src:002:weather:dataset
       short-name: src:002
@@ -70,27 +70,26 @@ extpipes:
         - rawtable-name: weather_europe
           # multiple pipelines for same raw-table
           pipelines:
-          - source: az-func
-            suffix: hourly
-            schedule: Continuous
-          - source: az-func
-            suffix: daily
-            schedule: Continuous
-
+            - source: az-func
+              suffix: hourly
+              schedule: Continuous
+            - source: az-func
+              suffix: daily
+              schedule: Continuous
 
 # follows the same parameter structure as the DB extractor configuration
 cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
-  host: ${HOST}
-  project: ${PROJECT}
+  host: ${CDF_HOST}
+  project: ${CDF_PROJECT}
   #
   # AAD IdP login credentials:
   #
   idp-authentication:
-    client-id: ${CLIENT_ID}
-    secret: ${CLIENT_SECRET}
+    client-id: ${CDF_CLIENT_ID}
+    secret: ${CDF_CLIENT_SECRET}
     scopes:
-      - ${SCOPES}
-    token_url: ${TOKEN_URL}
+      - ${CDF_SCOPES}
+    token_url: ${CDF_TOKEN_URL}
 
 logging:
   version: 1
@@ -112,8 +111,8 @@ logging:
       stream: "ext://sys.stderr"
   root:
     level: "DEBUG"
-    handlers: [ "console", "file" ]
+    handlers: ["console", "file"]
   loggers:
     cognite-sdk:
       level: "DEBUG"
-      handlers: [ "console"]
+      handlers: ["console"]

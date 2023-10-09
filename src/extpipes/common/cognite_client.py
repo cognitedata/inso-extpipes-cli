@@ -39,7 +39,7 @@ class CogniteConfig(Model):
 
     @property
     def client_name(self) -> str:
-        return self.idp_authentication.client_name or "extpipes-cli-client"
+        return self.idp_authentication.client_name or self.client_name
 
     @property
     def client_id(self) -> str:
@@ -55,32 +55,6 @@ class CogniteConfig(Model):
         if not v.startswith("https"):
             raise ValueError("must start with https://")
         return v
-
-
-#######################
-# class CogniteConfig(Model):
-#     credentials: Literal["oauth"]
-#     project: str = "use-case-dev"
-#     client_name: Optional[str] = None
-#     base_url: str
-#     # all required if credentials=oauth
-#     tenant_id: str
-#     client_id: str
-#     client_secret: str
-
-#     @property
-#     def token_url(self) -> str:
-#         return f"https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/token"
-
-#     @property
-#     def scopes(self) -> list[str]:
-#         return [f"{self.base_url}/.default"]
-
-#     @validator("tenant_id", "client_id", "client_secret", always=True)
-#     def is_required_if_oauth(cls, value, values, field):
-#         if (credentials := values.get("credentials")) and credentials == "oauth" and not value:
-#             raise ValueError(f"{field.name} is required when {credentials=}")
-#         return value
 
 
 def get_cognite_client(cognite_config: CogniteConfig) -> CogniteClient:

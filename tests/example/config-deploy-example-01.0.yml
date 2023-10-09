@@ -73,14 +73,14 @@ extpipes:
 
 # follows the same parameter structure as the DB extractor configuration
 cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
-  host: https://${HOST}/
-  project: ${PROJECT}
+  host: ${CDF_HOST}/
+  project: ${CDF_PROJECT}
   idp-authentication:
-    client-id: ${CLIENT_ID}
-    secret: ${CLIENT_SECRET}
+    client-id: ${CDF_CLIENT_ID}
+    secret: ${CDF_CLIENT_SECRET}
     scopes:
-      - https://${HOST}/.default
-    token_url: ${TOKEN_URL}
+      - ${CDF_SCOPES}
+    token_url: ${CDF_TOKEN_URL}
 
 # https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
 # https://docs.python.org/3/howto/logging-cookbook.html
