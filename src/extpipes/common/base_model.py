@@ -1,4 +1,10 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Tuple, Type
+
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
 
 
 def to_hyphen_case(value: str) -> str:
@@ -23,3 +29,17 @@ class Model(BaseSettings):
         # this supports both cases to be mixed
         populate_by_name=True,
     )
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: Type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+        # here we choose to ignore env_settings or dotenv_settings
+        # to avoid unecpectd expansion of pydantic properties matching an envvar
+        # all envvar expansion exlcusivly happens in the dependency-injector
+        return (init_settings,)
