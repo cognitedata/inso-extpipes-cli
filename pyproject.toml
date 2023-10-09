@@ -1,7 +1,7 @@
 [tool.poetry]
 # matching the name of the "script" hook, used from Dockerfile
 name = "extpipes-cli"
-version = "3.0.1"
+version = "3.0.0-beta1"
 description = "A CLI to deploy CDF Extraction Pipelines"
 authors = ["Peter Arwanitis <peter.arwanitis@cognite.com>", "Tugce Ozgur Oztetik <tugce.oztetik@cognite.com>"]
 license = "Apache-2.0"
@@ -14,13 +14,13 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
-python-dotenv = "*"
-dependency-injector = {version = "*", extras = ["yaml"]}
+python-dotenv = "^0.21.1"
+dependency-injector = {version = "^4.41.0", extras = ["yaml"]}
 click = "^8.1"
 cognite-sdk = {version = "^6", extras = ["pandas"]}
 rich = "^13"
-jinja2 = "*"
-pydantic-settings = "*"
+jinja2 = "^3.1"
+pydantic-settings = "^2"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^2.0.1"
