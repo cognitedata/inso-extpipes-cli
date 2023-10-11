@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from enum import ReprEnum  # new in 3.11
 from typing import Annotated, Dict, Optional, Set
 
@@ -53,8 +54,10 @@ class Pipeline(Model):
     @field_validator("metadata")
     @classmethod
     def ensure_metadata_to_have_version(cls, v: Dict[str, str]) -> Dict[str, str]:
-        if "extpipes-cli-version" not in v:
-            v["extpipes-cli-version"] = __version__
+        if "Dataops_created" not in v:
+            v["Dataops_created"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        if "Dataops_source" not in v:
+            v["Dataops_source"] = f"extpipes-cli v{__version__}"
         return v
 
     @field_validator("external_id", "name")
