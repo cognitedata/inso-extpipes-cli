@@ -145,3 +145,5 @@ dmypy.json
 configs/
 
 Pipfile
+
+.DS_Store

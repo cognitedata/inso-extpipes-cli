@@ -13,7 +13,7 @@ set +e
 docker run \
   --mount type=bind,source=$(pwd)/configs/example-config-extpipesv3.yml,target=/etc/config.yaml,readonly \
   --entrypoint run \
-  --env-file=.env_trading_root \
+  --env-file=.env_example \
   --rm \
   $IMAGE \
   --dry-run \

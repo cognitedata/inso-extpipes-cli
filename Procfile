@@ -1,0 +1,1 @@
+run: /workspace/extpipes-cli
