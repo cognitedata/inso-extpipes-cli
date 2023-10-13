@@ -1,0 +1,118 @@
+extpipes:
+  features:
+    #        name: string [ 1 .. 140 ] characters
+    #  externalId: string [ 1 .. 255 ] characters
+    # description: string [ 1 .. 500 ] characters
+
+    # extpipe-pattern only documentation atm
+    extpipe-pattern: "{source}:{short-name}:{rawtable-name}:{suffix}"
+
+    # new since v2.1.0
+    # The default and recommended value is: true
+    # to keep the deployment in sync with configuration
+    # which means non configured extpipes get automatically deleted
+    automatic-delete: true
+
+    # can contain multiple contacts, can be overwritten on pipeline level
+    default-contacts:
+      - name: Yours Truly
+        email: yours.truly@cognite.com
+        role: admin
+        send-notification: false
+
+  # following configuration creates four extpipes with names:
+  #   adf:src:001:sap_funcloc
+  #   db:src:001:sap_equipment
+  #   az-func:src:002:weather_europe:hourly
+  #   az-func:src:002:weather_europe:daily
+  rawdbs:
+    # list of raw-dbs > containing rawtables > containing pipelines
+    - rawdb-name: src:001:sap:rawdb
+      dataset-external-id: src:001:sap
+      short-name: src:001
+      rawtables:
+        - rawtable-name: sap_funcloc
+          pipelines:
+            # source is a short-name identifying the pipeline source being
+            # a 'db-extractor (db)', an 'Azure Function (az-func)',
+            # or 'Azure Data Factory (adf)', 'Python script (py)', ..
+            - source: adf
+              # since v2.2.0 'skip-rawtable' with default 'false' exists
+              # it allows to skip creation of the rawtable,
+              # to avoid automatic creation in case it is not needed
+              # FYI: Next v3 release will change the config-schema, to express
+              # raw-tables not being a leading, but optional element
+              skip-rawtable: false
+              schedule: Continuous
+        - rawtable-name: sap_equipment
+          pipelines:
+            - source: db
+              schedule: Continuous
+              # default-contacts can be overwritten
+              contacts:
+                - name: Fizz Buzz
+                  email: fizzbuzz@cognite.com
+                  role: admin
+                  send-notification: true
+    - rawdb-name: src:all:rawdb
+      dataset-external-id: src:all
+      short-name: src:all
+      rawtables:
+        - rawtable-name: skiptable
+          pipelines:
+            - source: az-func
+              skip-rawtable: true
+              schedule: Continuous
+    - rawdb-name: src:002:weather:rawdb
+      dataset-external-id: src:002:weather:dataset
+      short-name: src:002
+      rawtables:
+        - rawtable-name: weather_europe
+          # multiple pipelines for same raw-table
+          pipelines:
+            - source: az-func
+              suffix: hourly
+              schedule: Continuous
+            - source: az-func
+              suffix: daily
+              schedule: Continuous
+
+# follows the same parameter structure as the DB extractor configuration
+cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
+  host: ${CDF_HOST}
+  project: ${CDF_PROJECT}
+  #
+  # AAD IdP login credentials:
+  #
+  idp-authentication:
+    client-id: ${CDF_CLIENT_ID}
+    secret: ${CDF_CLIENT_SECRET}
+    scopes:
+      - ${CDF_SCOPES}
+    token_url: ${CDF_TOKEN_URL}
+
+logging:
+  version: 1
+  formatters:
+    formatter:
+      # class: "tools.formatter.StackdriverJsonFormatter"
+      format: "[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s"
+  handlers:
+    file:
+      class: "logging.FileHandler"
+      filename: ./logs/deploy-trading.log
+      formatter: "formatter"
+      mode: "w"
+      level: "DEBUG"
+    console:
+      class: "logging.StreamHandler"
+      level: "DEBUG"
+      formatter: "formatter"
+      stream: "ext://sys.stderr"
+  root:
+    level: "DEBUG"
+    handlers: ["console", "file"]
+  loggers:
+    cognite-sdk:
+      level: "DEBUG"
+      handlers: ["console"]

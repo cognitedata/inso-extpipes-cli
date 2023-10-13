@@ -108,6 +108,7 @@ celerybeat.pid
 
 # Environments
 .env
+*.env*
 .venv
 env/
 venv/
@@ -140,4 +141,12 @@ dmypy.json
 # vscode folder
 .vscode/
 
+# Ignore everything in the /configs directory
+configs/*
+
+# Except the example files
+!configs/example-config-extpipes*
+
 Pipfile
+
+.DS_Store

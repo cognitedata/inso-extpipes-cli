@@ -1,0 +1,8 @@
+host: ${CDF_HOST}/
+project: ${CDF_PROJECT}
+idp-authentication:
+  client-id: ${CDF_CLIENT_ID}
+  secret: ${CDF_CLIENT_SECRET}
+  scopes:
+    - ${CDF_SCOPES}
+  token_url: ${CDF_TOKEN_URL}

@@ -6,26 +6,28 @@ inso-extpipes-cli
 - [scope of work](#scope-of-work)
   - [to be done](#to-be-done)
 - [how to run](#how-to-run)
-- [ExtPipes CLI commands](#extpipes-cli-commands)
+- [Extpipes CLI commands](#extpipes-cli-commands)
   - [`Deploy` command](#deploy-command)
   - [Configuration](#configuration)
     - [Configuration for all commands](#configuration-for-all-commands)
       - [Environment variables](#environment-variables)
     - [Configuration for `deploy` command](#configuration-for-deploy-command)
   - [run local with poetry](#run-local-with-poetry)
-  - [run local with Python](#run-local-with-python)
-  - [run local with Docker](#run-local-with-docker)
+  - [run local with Python and Poetry](#run-local-with-python-and-poetry)
+  - [Run locally with Docker](#run-locally-with-docker)
+    - [production build](#production-build)
+    - [development build](#development-build)
   - [run as github action](#run-as-github-action)
-- [Contribute](#contribute)
-      - [Versioning](#versioning)
+  - [Contribute](#contribute)
+  - [Versioning](#versioning)
 # scope of work
 
 - It provides a configuration driven deployment for Cognite Extraction Pipelines (named `extpipes` in short)
 - Support to run it
-    - from `poetry run`
-    - from `python -m`
-    - from `docker run`
-    - and as GitHub Action
+  - from `poetry run`
+  - from `python -m`
+  - from `docker run`
+  - and as GitHub Action
 
 - templates used for implementation are
   - `cognitedata/transformation-cli`
@@ -51,7 +53,7 @@ Follow the initial setup first
 2. Change `.env_example` to `.env`
 3. Fill out `.env`
 
-# ExtPipes CLI commands
+# Extpipes CLI commands
 
 ## `Deploy` command
 
@@ -65,18 +67,61 @@ covered by the given configuration. You can deactivate this with the
 The command also is the configured to run used from a GitHub-Action workflow.
 
 ```bash
+➟  extpipes-cli --help
+Usage: extpipes-cli [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --version                Show the version and exit.
+  --cdf-project-name TEXT  CDF Project to interact with the CDF API, the
+                           'CDF_PROJECT',environment variable can be used
+                           instead. Required for OAuth2.
+  --cluster TEXT           The CDF cluster where CDF Project is hosted (e.g.
+                           api, europe-west1-1),Provide this or make sure to
+                           set the 'CLCDF_USTER' environment variable.
+                           Default: api
+  --host TEXT              The CDF host where CDF Project is hosted (e.g.
+                           https://api.cognitedata.com),Provide this or make
+                           sure to set the 'CDF_HOST' environment
+                           variable.Default: https://api.cognitedata.com/
+  --client-id TEXT         IdP client ID to interact with the CDF API. Provide
+                           this or make sure to set the 'CDF_CLIENT_ID'
+                           environment variable if you want to authenticate
+                           with OAuth2.
+  --client-secret TEXT     IdP client secret to interact with the CDF API.
+                           Provide this or make sure to set the
+                           'CDF_CLIENT_SECRET' environment variable if you
+                           want to authenticate with OAuth2.
+  --token-url TEXT         IdP token URL to interact with the CDF API. Provide
+                           this or make sure to set the 'CDF_TOKEN_URL'
+                           environment variable if you want to authenticate
+                           with OAuth2.
+  --scopes TEXT            IdP scopes to interact with the CDF API, relevant
+                           for OAuth2 authentication method. The 'CDF_SCOPES'
+                           environment variable can be used instead.
+  --audience TEXT          IdP Audience to interact with the CDF API, relevant
+                           for OAuth2 authentication method. The
+                           'CDF_AUDIENCE' environment variable can be used
+                           instead.
+  --dotenv-path TEXT       Provide a relative or absolute path to an .env file
+                           (for command line usage only)
+  --debug                  Print debug information
+  --dry-run                Log only planned CDF API actions while doing
+                           nothing. Defaults to False.
+  -h, --help               Show this message and exit.
+
+Commands:
+  deploy  Deploy a list of Extraction Pipelines from a configuration file
+```
+
+```bash
 ➟  extpipes-cli deploy --help
 Usage: extpipes-cli deploy [OPTIONS] [CONFIG_FILE]
 
-  Deploy a set of extpipes from a config-file
+  Deploy a list of Extraction Pipelines from a configuration file
 
 Options:
-  --debug                      Print debug information
-  --automatic-delete [yes|no]  Purge extpipes which are not specified in
-                               config-file automatically (this is the default
-                               behavior, to keep deployment in sync with
-                               configuration)
-  -h, --help                   Show this message and exit.
+  --automatic-delete  Delete extpipes which are not specified in config-file
+  -h, --help          Show this message and exit.
 ```
 
 ## Configuration
@@ -99,145 +144,129 @@ Below is an example configuration:
 ```yaml
 # follows the same parameter structure as the DB extractor configuration
 cognite:
-  host: ${EXTPIPES_CDF_HOST}
-  project: ${EXTPIPES_CDF_PROJECT}
+  host: ${CDF_HOST}
+  project: ${CDF_PROJECT}
   #
   # AAD IdP login credentials:
   #
   idp-authentication:
-    client-id: ${EXTPIPES_IDP_CLIENT_ID}
-    secret: ${EXTPIPES_IDP_CLIENT_SECRET}
+    client-id: ${CDF_CLIENT_ID}
+    secret: ${CDF_CLIENT_SECRET}
     scopes:
-      - ${EXTPIPES_IDP_SCOPES}
-    token_url: ${EXTPIPES_IDP_TOKEN_URL}
+      - ${CDF_SCOPES}
+    token_url: ${CDF_TOKEN_URL}
 
-logger:
-  file:
-    path: ./logs/deploy.log
-    level: INFO
-  console:
-    level: INFO
+# https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
+logging:
+  version: 1
+  formatters:
+    formatter:
+      # class: "tools.formatter.StackdriverJsonFormatter"
+      format: "[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s"
+  handlers:
+    file:
+      class: "logging.FileHandler"
+      filename: ./logs/deploy-trading.log
+      formatter: "formatter"
+      mode: "w"
+      level: "DEBUG"
+    console:
+      class: "logging.StreamHandler"
+      level: "DEBUG"
+      formatter: "formatter"
+      stream: "ext://sys.stderr"
+  root:
+    level: "DEBUG"
+    handlers: [ "console", "file" ]
 ```
 
 #### Environment variables
 
 Details about the environment variables:
 
-- `EXTPIPES_CDF_HOST`
+- `HOST`
   - The URL to your CDF cluster.
   - Example: `https://westeurope-1.cognitedata.com`
-- `EXTPIPES_CDF_PROJECT`
+- `PROJECT`
   - The CDF project.
-- `EXTPIPES_IDP_CLIENT_ID`
+- `CLIENT_ID`
   - The client ID of the app registration you have created for the CLI.
-- `EXTPIPES_IDP_CLIENT_SECRET`
+- `CLIENT_SECRET`
   - The client secret you have created for the app registration,
-- `EXTPIPES_IDP_TOKEN_URL = https://login.microsoftonline.com/<tenant id>/oauth2/v2.0/token`
+- `TOKEN_URL = https://login.microsoftonline.com/<tenant id>/oauth2/v2.0/token`
   - If you're using Azure AD, replace `<tenant id>` with your Azure tenant ID.
-- `EXTPIPES_IDP_SCOPES`
+- `SCOPES`
   - Usually: `https://<cluster-name>.cognitedata.com/.default`
 
 ### Configuration for `deploy` command
 
 In addition to the sections described above, the configuration file for `deploy` command requires more sections (some of them optional):
 
-
-- `extpipe-pattern` - optional format-string of the extpipes names (and externalIds), at them moment only for documentation and not used from implementation
-- `default-contacts` - optional list of contacts which will be added to extpipes as default, if not explict configured on pipeline level
-  - defined through list of
-    - `name`
-    - `email`
-    - `role`: `str`
-    - `send-notification` : `true|false`
-- `automatic-delete` - `true|false` optional flag, defaults to `true`
-- `rawdbs` (**your main configuration goes here**)
-  - defined through list of
-    - `rawdb-name`
-    - `dataset-external-id`
-    - `short-name`
-    - `rawtables`
-      - defined through list of
-        - `rawtable-name`
-        - `pipelines`
-          - defined through list of
-            - `source`
-            - `schedule` : `Continuous|On trigger`
-            - `skip-rawtable` : `true|false` (default `false`)
-            - `suffix`
-            - `contacts`
-              - defined through list of
-                - `name`
-                - `email`
-                - `role`: `str`
-                - `send-notification` : `true|false`
-
 Configuration example:
 
 ```yaml
-# extpipe-pattern only documentation atm
-extpipe-pattern: '{source}:{short-name}:{rawtable-name}:{suffix}'
+extpipes:
+  features:
+    # NOT USED: extpipe-pattern only documentation atm
+    extpipe-pattern: '{source}:{short-name}:{table-name}:{suffix}'
 
-# new since v2.1.0
-# The default and recommended value is: true
-# to keep the deployment in sync with configuration
-# which means non configured extpipes get automatically deleted
-automatic-delete: true
+    # The default and recommended value is: true
+    # to keep the deployment in sync with configuration
+    # which means non configured extpipes get automatically deleted
+    automatic-delete: true
 
-# can contain multiple contacts, can be overwritten on pipeline level
-default-contacts:
-  - name: Yours Truly
-    email: yours.truly@cognite.com
-    role: admin
-    send-notification: false
+    # can contain multiple contacts, can be overwritten on pipeline level
+    default-contacts:
+      - name: Yours Truly
+        email: yours.truly@cognite.com
+        role: admin
+        send-notification: false
 
-# following configuration creates four extpipes with names:
-#   adf:src:001:sap_funcloc
-#   db:src:001:sap_equipment
-#   az-func:src:002:weather_europe:hourly
-#   az-func:src:002:weather_europe:daily
-rawdbs:
-  # list of raw-dbs > containing rawtables > containing pipelines
-  - rawdb-name: src:001:sap:rawdb
-    dataset-external-id: src:001:sap
-    short-name: src:001
-    rawtables:
-      - rawtable-name: sap_funcloc
-        pipelines:
-        # source is a short-name identifying the pipeline source being
-        # a 'db-extractor (db)', an 'Azure Function (az-func)',
-        # or 'Azure Data Factory (adf)', 'Python script (py)', ..
-        - source: adf
-          schedule: Continuous
-          # since v2.2.0 'skip-rawtable' with default 'false' exists
-          # It allows to skip creation of the rawtable,
-          # to avoid automatic creation in case it is not needed
-          # FYI: Next v3 release will change the config-schema, to express
-          # raw-tables not being a leading, but optional element
-          skip-rawtable: false
-      - rawtable-name: sap_equipment
-        pipelines:
-        - source: db
-          schedule: Continuous
-          # default-contacts can be overwritten
-          contacts:
-            - name: Fizz Buzz
-              email: fizzbuzz@cognite.com
-              role: admin
-              send-notification: true
-  - rawdb-name: src:002:weather:rawdb
-    dataset-external-id: src:002:weather
-    short-name: src:002
-    rawtables:
-      - rawtable-name: weather_europe
-        # multiple pipelines for same raw-table
-        pipelines:
-        - source: az-func
-          suffix: hourly
-          schedule: Continuous
-        - source: az-func
-          suffix: daily
-          schedule: Continuous
+  pipelines:
+      # required
+      # max 255 char, external-id provided by client
+    - external-id: src:001:sap:sap_funcloc:continuous
+      # optional: str, default to external-id
+      name: src:001:sap:sap_funcloc:continuous
+      # optional: str
+      description: describe or defaults to auto-generated description, that it is "deployed through extpipes-cli@v3.0.0"
+      # optional: str
+      data-set-external-id: src:001:sap
+      # optional: "On trigger", "Continuous" or cron expression
+      schedule: Continuous
+      # optional: [{},{}]
+      # defaults to features.default-contacts (if exist)
+      contacts:
+        - name: Fizz Buzz
+          email: fizzbuzz@cognite.com
+          role: admin
+          send-notification: true
+      # optional: str
+      source: az-func
+      # optional: {}
+      metadata:
+        version: extpipes-cli@v3.1.0
+      # optional: str max 10000 char
+      # Documentation text field, supports Markdown for text formatting.
+      documentation: Documentation which can include Mermaid diagrams?
+      # optional: str
+      # Usually user email is expected here, defaults to extpipes + version?
+      created-by: extpipes-cli@v3.1.0
+
+      # optional: [{},{}]
+      raw-tables:
+        - db-name: src:001:sap
+          table-name: sap_funcloc
+
+      # optional: {}
+      extpipe-config:
+        # str
+        config: |
+          nested yaml/json/ini which is simply a string for this config
+        # optional: str
+        description: describe the config, or autogenerate?
 ```
+
 ## run local with poetry
 
 ```bash
@@ -248,32 +277,48 @@ poetry update
 poetry run extpipes-cli deploy --debug configs/example-config-extpipes.yml
 ```
 
-## run local with Python
+## run local with Python and Poetry
 
 ```bash
-export PYTHONPATH=.
-
-python incubator/extpipes_cli/__main__.py deploy configs/example-config-extpipes.yml
+poetry shell
+# extpipes-cli is defined in pyproject.toml
+extpipes-cli deploy ./configs/example-config-extpipes.yml
 ```
 
-## run local with Docker
+## Run locally with Docker
+
+### production build
 - `.dockerignore` file
 - volumes for `configs` (to read) and `logs` folder (to write)
 
 ```bash
-docker build -t incubator/extpipes:v1.0 -t incubator/extpipes:latest .
+docker build -t extpipes-cli:prod --target=production .
 
 # ${PWD} because only absolute paths can be mounted
-docker run -it --volume ${PWD}/configs:/configs --volume ${PWD}/logs:/logs  --env-file=.env incubator/extpipes deploy /configs/example-config-extpipes.yml
+# poerty project is deplopyed to /opt/extpipes-cli/
+docker run --env-file=.env --volume ${PWD}/configs:/configs --volume ${PWD}/logs:/opt/extpipes-cli/logs extpipes-cli:prod deploy /configs/config-deploy-example.yml
 ```
 
-Try to debug container
-- requires override of `ENTRYPOINT`
-  - `/bin/bash` not available but `sh`
-- no `ls` available :/
+### development build
+
+Debugging the Docker container with all dev-dependencies and poetry installed
+
+- volumes for `configs` (to read) and `logs` folder (to write)
+- volumes for `src` (to read/write)
 
 ```bash
-docker run -it --volume ${PWD}/configs:/configs --env-file=.env --entrypoint /bin/sh incubator/extpipes
+# using the 'development' target of the Dockerfile multi-stages
+➟  docker build -t extpipes-cli:dev --target=development .
+
+# start bash in container
+➟  docker run --env-file=.env --volume ${PWD}/configs:/configs --volume ${PWD}/logs:/logs --volume ${PWD}/src://opt/extpipes-cli/src -it --entrypoint /bin/bash extpipes-cli:dev
+
+# run project from inside container
+> poetry shell
+> extpipes-cli --help
+> extpipes-cli --dry-run yes deploy /configs/config-deploy-example.yml
+# logs are available on your host in mounted '.logs/' folder
+# 'src/' changes are mounted to your host ./src folder
 ```
 
 ## run as github action
@@ -286,34 +331,38 @@ jobs:
     runs-on: ubuntu-latest
     # environment variables
     env:
-      CDF_PROJECT: yourcdfproject
-      CDF_CLUSTER: bluefield
+      PROJECT: yourcdfproject
+      CLUSTER: bluefield
       IDP_TENANT: abcde-12345
-      CDF_HOST: https://bluefield.cognitedata.com/
+      HOST: https://bluefield.cognitedata.com/
       - name: Deploy extpipes
         # best practice is to use a tagged release (and not '@main')
         # find a released tag here: https://github.com/cognitedata/inso-extpipes-cli/releases
-        uses: cognitedata/inso-expipes-cli@v2.1.0
+        uses: cognitedata/inso-expipes-cli@v2.2.1
         env:
-            EXTPIPES_IDP_CLIENT_ID: ${{ secrets.CLIENT_ID }}
-            EXTPIPES_IDP_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-            EXTPIPES_CDF_HOST: ${{ env.CDF_HOST }}
-            EXTPIPES_CDF_PROJECT: ${{ env.CDF_PROJECT }}
-            EXTPIPES_IDP_TOKEN_URL: https://login.microsoftonline.com/${{ env.IDP_TENANT }}/oauth2/v2.0/token
-            EXTPIPES_IDP_SCOPES: ${{ env.CDF_HOST }}.default
+            CLIENT_ID: ${{ secrets.CLIENT_ID }}
+            CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+            HOST: ${{ env.HOST }}
+            PROJECT: ${{ env.PROJECT }}
+            TOKEN_URL: https://login.microsoftonline.com/${{ env.IDP_TENANT }}/oauth2/v2.0/token
+            SCOPES: ${{ env.HOST }}.default
         # additional parameters for running the action
         with:
           config_file: ./configs/example-config-extpipes.yml
 ```
-# Contribute
+
+## Contribute
+
 1. `poetry install`
 2. To run all checks locally - which is typically needed if the GitHub check is failing - e.g. you haven't set up `pre-commit` to run automatically:
-  -  `poetry run pre-commit install`  # Only needed if not installed
-  -  `poetry run pre-commit run --all-files`
-#### Versioning
-- Uses `semantic-release` to create version tags.
-- The rules for commit messages are conventional commits, see [conventionalcommits](https://www.conventionalcommits.org/en/v1.0.0-beta.4/#summary%3E)
-- Remark: If version needs change, before merge, make sure commit title has elements mentioned on `conventionalcommits`
-- Remark: with new version change, bump will update the version on `pyproject.toml` so no need to change version there.
-- Remark: version in `incubator/extpipes_cli/__init__` is used in main to add version on metadata.
-  This is not a part of semantic release but needs to be updated to upcoming version before version update.
+
+   - `poetry install && poetry shell`
+   - `pre-commit install`  # Only needed if not installed
+   - `pre-commit run --all-files`
+
+## Versioning
+
+- Remark: with new version change, manually changes required in
+  - the version on `pyproject.toml`
+  - the version in `src/extpipes/__init__` (used by `--version` parameter).
+  - the `action.yml` file

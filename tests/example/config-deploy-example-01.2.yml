@@ -1,0 +1,82 @@
+extpipes:
+  features:
+    naming-pattern: "{{source}}:{{table_name}}:my-suffix"
+
+    automatic-delete: true
+
+    default-contacts:
+      - name: Yours Truly
+        email: yours.truly@cognite.com
+        role: admin
+        send-notification: false
+
+  pipelines:
+    # auto-generated 'external-id' and 'name' based on 'naming-pattern' and 'metadata'
+    - description: describe or defaults to auto-generated description, that it is "deployed through extpipes-cli@v3.0.0"
+      # optional, for deployments w/o full scoping?
+      data-set-external-id: src:001:sap
+      # optional: string or null^(On trigger|Continuous)|(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|s|m|h))+)|((((\d+,)+\d+|(\d+([/\-])\d+)|\d+|\*(/\d+)?) ?){5,7})$
+      # "On trigger", "Continuous" or cron expression
+      schedule: Continuous
+      # optional [{},{}]
+      # defaults to features.default-contacts (if exist)
+      contacts:
+        - name: Fizz Buzz
+          email: fizzbuzz@cognite.com
+          role: admin
+          send-notification: true
+      # optional {}
+      metadata:
+        version: extpipes-cli@v3.0.1
+        source: test-db
+        table_name: test-table
+      # optional max 10000 char
+      # Documentation text field, supports Markdown for text formatting.
+      # TODO: simple option to link to another file in yaml? 10k can be quite long?!
+      documentation: Documentation which can include Mermaid diagrams?
+      # optional
+      # TODO: should be automatically created?
+      created-by: extpipes-cli@v3.0.1
+
+      # optional [{},{}]
+      raw-tables:
+        - db-name: src:001:sap
+          table-name: sap_funcloc
+
+# follows the same parameter structure as the DB extractor configuration
+cognite: # kwargs to pass to the CogniteClient, Environment variable format: ${ENVIRONMENT_VARIABLE}
+  host: ${CDF_HOST}/
+  project: ${CDF_PROJECT}
+  idp-authentication:
+    client-id: ${CDF_CLIENT_ID}
+    secret: ${CDF_CLIENT_SECRET}
+    scopes:
+      - ${CDF_SCOPES}
+    token_url: ${CDF_TOKEN_URL}
+
+# https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
+# https://docs.python.org/3/howto/logging-cookbook.html
+logging:
+  version: 1
+  formatters:
+    formatter:
+      format: "[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s"
+  handlers:
+    file:
+      class: "logging.FileHandler"
+      filename: ./logs/deploy-trading.log
+      formatter: "formatter"
+      mode: "w"
+      level: "DEBUG"
+    console:
+      class: "logging.StreamHandler"
+      level: "DEBUG"
+      formatter: "formatter"
+      stream: "ext://sys.stderr"
+  root:
+    level: "INFO"
+    handlers: ["console", "file"]
+  loggers:
+    cognite-sdk:
+      level: "INFO"
+      handlers: ["console"]
