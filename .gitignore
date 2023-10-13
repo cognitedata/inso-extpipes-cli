@@ -141,8 +141,15 @@ dmypy.json
 # vscode folder
 .vscode/
 
-# avoid automatic file add into git commit
-configs/
+# Ignore everything in the /configs directory
+configs/*
+
+# Except the following files
+!configs/example-config-extpipesv2.yml
+!configs/example-config-extpipesv2to3.yml
+!configs/example-config-extpipesv3.yml
+!configs/example-config-extpipesv3-minimum.yml
+
 
 Pipfile
 
