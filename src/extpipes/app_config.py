@@ -55,7 +55,7 @@ class Pipeline(Model):
     @classmethod
     def ensure_metadata_to_have_version(cls, v: Dict[str, str]) -> Dict[str, str]:
         if "Dataops_created" not in v:
-            v["Dataops_created"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            v["Dataops_created"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if "Dataops_source" not in v:
             v["Dataops_source"] = f"extpipes-cli v{__version__}"
         return v
