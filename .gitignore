@@ -144,12 +144,8 @@ dmypy.json
 # Ignore everything in the /configs directory
 configs/*
 
-# Except the following files
-!configs/example-config-extpipesv2.yml
-!configs/example-config-extpipesv2to3.yml
-!configs/example-config-extpipesv3.yml
-!configs/example-config-extpipesv3-minimum.yml
-
+# Except the example files
+!configs/example-config-extpipes*
 
 Pipfile
 
