@@ -110,4 +110,4 @@ class CommandBase:
         if missing:
             logging.warning(f"## Detected missing RAW tables: {pprint.pformat(missing)}")
             for _db, _tables in missing.items():
-                self.client.raw.tables.create(db_name=_db, table=_tables)
+                self.client.raw.tables.create(db_name=_db, name=_tables)
