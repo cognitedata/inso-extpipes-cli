@@ -47,7 +47,7 @@ class Pipeline(Model):
     source: Optional[str] = Field(default=None)
     metadata: dict[str, str] = Field(default=dict())
     documentation: Optional[str] = Field(default=None)
-    created_by: Optional[str] = Field(default=None)
+    created_by: Optional[str] = Field(default=f"dataops - extpipes-cli@v{__version__}")
     raw_tables: list[RawTable] = Field(default=list())
     extpipe_config: Optional[dict[str, str]] = Field(default=None)
 
