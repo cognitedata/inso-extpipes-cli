@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from enum import ReprEnum  # new in 3.11
-from typing import Annotated, Dict, Optional, Set
+from typing import Annotated, Optional
 
 from jinja2 import Environment, meta
 from pydantic import Field, StringConstraints, field_validator, model_validator
@@ -45,15 +45,15 @@ class Pipeline(Model):
     schedule: Annotated[str, StringConstraints(pattern=CRON_OR_FIXED_PATTERN)]
     contacts: list[Contact] = Field(default=list())
     source: Optional[str] = Field(default=None)
-    metadata: Dict[str, str] = Field(default=dict())
+    metadata: dict[str, str] = Field(default=dict())
     documentation: Optional[str] = Field(default=None)
     created_by: Optional[str] = Field(default=None)
     raw_tables: list[RawTable] = Field(default=list())
-    extpipe_config: Optional[Dict[str, str]] = Field(default=None)
+    extpipe_config: Optional[dict[str, str]] = Field(default=None)
 
     @field_validator("metadata")
     @classmethod
-    def ensure_metadata_to_have_version(cls, v: Dict[str, str]) -> Dict[str, str]:
+    def ensure_metadata_to_have_version(cls, v: dict[str, str]) -> dict[str, str]:
         if "Dataops_created" not in v:
             v["Dataops_created"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if "Dataops_source" not in v:
@@ -108,7 +108,7 @@ class ExtpipesConfig(Model):
                 logging.error(f"## Misconfigured pipelines name: {misconfigured}")
                 raise ValueError("With pattern provider, pipelines should not have names defined.")
 
-            def extract_jinja_variables(template: str) -> Set[str]:
+            def extract_jinja_variables(template: str) -> set[str]:
                 env = Environment()
                 parsed_content = env.parse(template)
                 # Extract all variables from the parsed content

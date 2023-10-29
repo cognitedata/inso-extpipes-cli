@@ -1,7 +1,7 @@
 import logging
 import pprint
 from pathlib import Path
-from typing import Dict, Self
+from typing import Self
 
 from cognite.client import CogniteClient
 from cognite.client.exceptions import CogniteNotFoundError
@@ -21,7 +21,6 @@ class CommandBase:
         dry_run: bool,
         dotenv_path: str | Path | None = None,
     ):
-
         # validate and load config according to command-mode
         ContainerCls = ContainerSelector[command]
         self.container = init_container(ContainerCls, config_path=config_path, dotenv_path=dotenv_path)
@@ -78,7 +77,7 @@ class CommandBase:
 
     def ensure_raw_tables(self):
         # RAW
-        def find_missing(existing: Dict, target: Dict) -> Dict:
+        def find_missing(existing: dict, target: dict) -> dict:
             missing = {}
 
             for key, value_list in target.items():
@@ -94,7 +93,7 @@ class CommandBase:
             return missing
 
         # build dictionary of configured dbs:tables
-        requested_raw_tables: Dict = {}
+        requested_raw_tables: dict = {}
         for pipeline in self.extpipes_config.pipelines:
             for raw_table in pipeline.raw_tables:
                 if raw_table.db_name in requested_raw_tables:
@@ -102,7 +101,7 @@ class CommandBase:
                 else:
                     requested_raw_tables[raw_table.db_name] = [raw_table.table_name]
         # get existing dbs/tables into a dict for fast lookup
-        cdf_dbs: Dict = {}
+        cdf_dbs: dict = {}
         for db_name in {_db.name for _db in self.client.raw.databases.list(limit=None)}:
             cdf_dbs[db_name] = [table.name for table in self.client.raw.tables.list(db_name=db_name, limit=None)]
 

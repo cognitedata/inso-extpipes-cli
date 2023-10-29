@@ -1,5 +1,4 @@
 import logging
-from typing import Dict
 
 from cognite.client.data_classes import ExtractionPipeline, ExtractionPipelineContact
 from jinja2 import Template
@@ -7,7 +6,7 @@ from jinja2 import Template
 from .base import CommandBase
 
 
-def _render_template(template: str, metadata: Dict[str, str]) -> str:
+def _render_template(template: str, metadata: dict[str, str]) -> str:
     # Create a new Jinja2 template from the given template string
     jinja_template = Template(template)
 

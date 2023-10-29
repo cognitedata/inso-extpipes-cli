@@ -1,7 +1,7 @@
 import logging.config
 import os
 from pathlib import Path
-from typing import Dict, Optional, Type
+from typing import Optional, Type
 
 from dependency_injector import containers, providers
 from dotenv import load_dotenv
@@ -44,7 +44,7 @@ def init_container(
     return container
 
 
-def init_logging(logging_config: Optional[Dict], deprecated_logger_config: Optional[Dict]):
+def init_logging(logging_config: Optional[dict], deprecated_logger_config: Optional[dict]):
     # https://docs.python.org/3/howto/logging-cookbook.html#logging-to-a-single-file-from-multiple-processes
     # from logging-cookbook examples for 'logging_config' dict
     # TODO: needed to handle missing log folders?
