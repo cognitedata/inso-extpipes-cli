@@ -1,4 +1,4 @@
-from typing import Tuple, Type
+from typing import Type
 
 from pydantic_settings import (
     BaseSettings,
@@ -22,7 +22,7 @@ def to_hyphen_case(value: str) -> str:
 
 class Model(BaseSettings):
     model_config = SettingsConfigDict(
-        extra="ignore",
+        extra="forbid",
         # generate for each field an alias in hyphen-case (kebap)
         alias_generator=to_hyphen_case,
         # an aliased field may be populated by its name as given by the model attribute, as well as the alias
@@ -38,7 +38,7 @@ class Model(BaseSettings):
         env_settings: PydanticBaseSettingsSource,
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
-    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
         # here we choose to ignore env_settings or dotenv_settings
         # to avoid unecpectd expansion of pydantic properties matching an envvar
         # all envvar expansion exlcusivly happens in the dependency-injector

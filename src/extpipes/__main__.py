@@ -27,7 +27,7 @@
 # ## dependencies are validated
 # * `schedule` only supports: `On trigger | Continuous | <cron expression> | null`
 
-from typing import Dict, Optional
+from typing import Optional
 
 import click
 from click import Context
@@ -168,7 +168,7 @@ def extpipes_cli(
     help="Delete extpipes which are not specified in config-file",
 )
 @click.pass_obj
-def deploy(obj: Dict, config_file: str, automatic_delete: bool = True) -> None:
+def deploy(obj: dict, config_file: str, automatic_delete: bool = True) -> None:
     click.echo(click.style("Deploying Extraction Pipelines...", fg="green"))
 
     try:
