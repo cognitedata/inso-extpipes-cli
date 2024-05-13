@@ -3,7 +3,7 @@
 name = "extpipes-cli"
 version = "3.0.0-beta2"
 description = "A CLI to deploy CDF Extraction Pipelines"
-authors = ["Peter Arwanitis <peter.arwanitis@cognite.com>", "Tugce Ozgur Oztetik <tugce.oztetik@cognite.com>"]
+authors = ["Peter Arwanitis <peter.arwanitis@cognite.com>"]
 license = "Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/cognitedata/inso-extpipes-cli"
