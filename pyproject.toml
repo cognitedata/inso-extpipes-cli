@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "inso-extpipes-cli"
-version = "2.2.1"
+version = "2.2.2"
 description = "A CLI to deploy CDF Extraction Pipelines"
 authors = ["Peter Arwanitis <peter.arwanitis@cognite.com>", "Tugce Ozgur Oztetik <tugce.oztetik@cognite.com>"]
 license = "Apache-2.0"
@@ -27,6 +27,7 @@ known_third_party = ["click", "pytest"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
+poetry-plugin-export = "*"
 cognite-extractor-utils = "^2.2.0"
 cognite-sdk-core = {extras=["pandas"],version = "^2.56.1"}
 click = "^8.1.3"
