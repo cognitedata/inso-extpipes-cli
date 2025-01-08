@@ -9,6 +9,8 @@ ENV PYTHONUNBUFFERED=1
 RUN python3 -m pip install --upgrade pip
 RUN pip install poetry
 RUN poetry config virtualenvs.create false
+# Explicitly install the poetry-plugin-export
+RUN poetry self add poetry-plugin-export
 
 COPY poetry.lock .
 COPY pyproject.toml .
