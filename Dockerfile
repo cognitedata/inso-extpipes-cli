@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 
 # Poetry setup
 RUN python3 -m pip install --upgrade pip
-RUN pip install poetry
+RUN pip install poetry==1.8.3
 RUN poetry config virtualenvs.create false
 
 COPY poetry.lock .
