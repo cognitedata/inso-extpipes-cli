@@ -31,7 +31,7 @@ inputs:
     required: true
 runs:
   using: "docker"
-  image: docker://cognite/extpipes-cli:v3.0.0-beta2
+  image: docker://cognite/extpipes-cli:v3.0.0-beta3
   env:
     CDF_TOKEN_URL: ${{ inputs.token-url }}
     CDF_PROJECT: ${{ inputs.cdf-project-name }}
